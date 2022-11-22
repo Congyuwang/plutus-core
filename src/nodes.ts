@@ -374,7 +374,7 @@ class Converter {
         return this.label;
     }
 
-    getRequiredInputPerUnit(): Map<ElementId, number> {
+    _getRequiredInputPerUnit(): Map<ElementId, number> {
         return this.requiredInputPerUnit;
     }
 

@@ -127,6 +127,44 @@ class Graph {
         return e;
     }
 
+    /**
+     * add required element to converter.
+     */
+    public setRequiredInputPerUnit(
+        id: ElementId,
+        label: Label,
+        amount: number
+    ) {
+        const converter = this.getElement(id);
+        if (!converter || converter.type !== ElementType.Converter) {
+            throw Error("Selected element is not a converter");
+        }
+        const requiredId = this.labels.get(label);
+        if (!requiredId) {
+            throw Error(`label '${label}' does not exist`);
+        }
+        converter._setRequiredInputPerUnit(requiredId, amount);
+    }
+
+    public getRequiredInputPerUnit(id: ElementId): Map<Label, number> {
+        const converter = this.getElement(id);
+        if (!converter || converter.type !== ElementType.Converter) {
+            throw Error("Selected element is not a converter");
+        }
+        const returnMap: Map<Label, number> = new Map();
+        const requiredInput = converter._getRequiredInputPerUnit();
+        for (let [id, requirement] of requiredInput) {
+            const label = this.getElement(id);
+            if (label) {
+                returnMap.set(label.getLabel(), requirement);
+            } else {
+                // remove invalid input entries
+                requiredInput.delete(id);
+            }
+        }
+        return returnMap;
+    }
+
     // D
     public deleteElement(id: ElementId) {
         const e = this.elements.get(id);

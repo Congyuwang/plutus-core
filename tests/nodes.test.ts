@@ -147,7 +147,7 @@ describe("test Converter", () => {
         converter._setRequiredInputPerUnit("003", 8);
         converter._setRequiredInputPerUnit("004", 16);
         converter.deleteRequiredInputPerUnit("002");
-        expect(converter.getRequiredInputPerUnit()).toEqual(
+        expect(converter._getRequiredInputPerUnit()).toEqual(
             new Map([
                 ["001", 2],
                 ["003", 8],
