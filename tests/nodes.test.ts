@@ -82,7 +82,7 @@ describe("test Gate", () => {
         ]);
 
         // test _setOutput, _deleteOutput
-        for (let [id, weight] of weightMap) {
+        for (const [id, weight] of weightMap) {
             gate._setOutput(id, weight);
         }
         gate._setOutput("6", 10);
@@ -94,7 +94,7 @@ describe("test Gate", () => {
 
         // test distributions p-value of Chi-Squared > 0.05
         const stats = new Map();
-        for (let k of weightMap.keys()) {
+        for (const k of weightMap.keys()) {
             stats.set(k, 0);
         }
         const ROUND = 100000;

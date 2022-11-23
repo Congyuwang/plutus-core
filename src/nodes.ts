@@ -451,7 +451,7 @@ class Converter {
 
         // compute units produced
         const ratio = [] as number[];
-        for (let [id, value] of this.requiredInputPerUnit.entries()) {
+        for (const [id, value] of this.requiredInputPerUnit.entries()) {
             if (!this.buffer.has(id)) {
                 // do nothing when lack material
                 return 0;
@@ -464,7 +464,7 @@ class Converter {
     }
 
     private consumeBuffer(unitsProduced: number) {
-        for (let [id, value] of this.requiredInputPerUnit.entries()) {
+        for (const [id, value] of this.requiredInputPerUnit.entries()) {
             const inputConsumed = value * unitsProduced;
             this.buffer.set(id, this.buffer.get(id)! - inputConsumed);
         }

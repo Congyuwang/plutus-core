@@ -153,7 +153,7 @@ class Graph {
         }
         const returnMap: Map<Label, number> = new Map();
         const requiredInput = converter._getRequiredInputPerUnit();
-        for (let [id, requirement] of requiredInput) {
+        for (const [id, requirement] of requiredInput) {
             const label = this.getElement(id);
             if (label) {
                 returnMap.set(label.getLabel(), requirement);
@@ -196,7 +196,7 @@ class Graph {
                     this.deleteElement(gateInputEdge);
                 }
                 const gateOutputEdges = e._getOutputs().keys();
-                for (let edgeId of gateOutputEdges) {
+                for (const edgeId of gateOutputEdges) {
                     this.deleteElement(edgeId);
                 }
                 break;
@@ -331,7 +331,7 @@ class GraphVariableScope implements VariableScope {
 
     keys(): Iterator<Label> {
         const vars = new Set(this.localCache.keys());
-        for (let label of this.graph.labels.keys()) {
+        for (const label of this.graph.labels.keys()) {
             if (this.has(label)) {
                 vars.add(label);
             }
