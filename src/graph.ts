@@ -171,7 +171,7 @@ class Graph {
      * which is supposed to remain immutable, whereas the Label
      * might change.
      */
-    public setRequiredInputPerUnit(
+    public setConverterRequiredInputPerUnit(
         id: ElementId,
         label: Label,
         amount: number
@@ -187,7 +187,7 @@ class Graph {
         converter._setRequiredInputPerUnit(requiredId, amount);
     }
 
-    public getRequiredInputPerUnit(id: ElementId): Map<Label, number> {
+    public getConverterRequiredInputPerUnit(id: ElementId): Map<Label, number> {
         const converter = this.getElement(id);
         if (!converter || converter.type !== ElementType.Converter) {
             throw Error("Selected element is not a converter");
