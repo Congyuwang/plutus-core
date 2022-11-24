@@ -271,6 +271,7 @@ class Gate {
     readonly type = ElementType.Gate;
     private label: Label;
     private fromEdge?: ElementId;
+    private selectedToEdge?: ElementId;
     private readonly toEdges: Map<ElementId, Weight>;
 
     constructor(label: Label) {
@@ -286,6 +287,16 @@ class Gate {
         return this.fromEdge;
     }
 
+    /**
+     * Get the currently selected edge id.
+     */
+    _getOutput(): ElementId | undefined {
+        return this.selectedToEdge;
+    }
+
+    /**
+     * Get all output and their weights
+     */
     _getOutputs(): Map<ElementId, Weight> {
         return this.toEdges;
     }
@@ -314,9 +325,16 @@ class Gate {
         this.fromEdge = undefined;
     }
 
-    // remove one of the outputs
     _deleteOutput(id: ElementId) {
         this.toEdges.delete(id);
+    }
+
+    /**
+     * Update selected output element id
+     * by random selection.
+     */
+    _nextTick() {
+        this.selectedToEdge = this._randomSelect();
     }
 
     // return undefined if no outputs defined
