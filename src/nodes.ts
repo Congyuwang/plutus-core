@@ -461,6 +461,13 @@ class Converter {
         this.toEdge = undefined;
     }
 
+    /**
+     * The maximum amount of output value that can be produced from
+     * this `Converter`.
+     *
+     * @param scope the variable scope containing values for evaluating
+     *        condition
+     */
     maximumConvertable(scope: VariableScope): number {
         // must reach condition to convert
         if (!this.condition.evaluate(scope)) {
@@ -471,7 +478,7 @@ class Converter {
         const ratio = [] as number[];
         for (const [id, value] of this.requiredInputPerUnit.entries()) {
             if (!this.buffer.has(id)) {
-                // do nothing when lack material
+                // lack material
                 return 0;
             }
             if (value > 0) {
