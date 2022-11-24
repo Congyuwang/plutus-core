@@ -11,6 +11,7 @@ import {
     Pool,
 } from "./nodes";
 import { VariableScope } from "./formula";
+import nextTick from "./runner";
 
 const DEFAULT_WEIGHT = 1;
 
@@ -277,6 +278,13 @@ class Graph {
      */
     public variableScopes(): VariableScope {
         return new GraphVariableScope(this);
+    }
+
+    /**
+     * Compute the next tick state of the graph
+     */
+    public async nextTick() {
+        await nextTick(this);
     }
 
     // node.output = edge.from
