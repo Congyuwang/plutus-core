@@ -15,8 +15,11 @@ import { VariableScope } from "./formula";
 const DEFAULT_WEIGHT = 1;
 
 class Graph {
+    // Mapping from globally unique ID to Edge | Node.
     elements: Map<ElementId, Element>;
+    // Mapping from globally unique labels to unique ID.
     labels: Map<Label, ElementId>;
+    // A counter for implementing automatic labelling.
     autoLabelCounter: {
         pool: number;
         gate: number;
@@ -35,7 +38,26 @@ class Graph {
         };
     }
 
-    // C-Edge
+    /**
+     * Create an edge between two different Nodes.
+     * This is the only right way to add edge to this graph.
+     *
+     * ## Specific behavior
+     *
+     * The method checks that the fromId, and toId must exist,
+     * and that they do not correspond to Edges,
+     * but Nodes (Pool | Converter | etc. ).
+     *
+     * When connecting an edge which conflicts with existing edge
+     * (i.e., connecting to a Pool which already has an edge connected to it),
+     * the method will delete the old edge.
+     *
+     * @param edgeId the id of the edge, must be different from existing ids
+     * @param fromId from which Node
+     * @param toId to which Node
+     * @param label (optional) a globally unique label.
+     *        If missing, use automatic labelling.
+     */
     public connect(
         edgeId: ElementId,
         fromId: ElementId,
@@ -59,7 +81,13 @@ class Graph {
         this.labels.set(labelName, edgeId);
     }
 
-    // C-Node
+    /**
+     * Add a new Node to the graph.
+     * @param type `NodeType.Pool` | `NodeType.Converter` | `NodeType.Gate`,
+     * @param id a globally unique element id.
+     * @param label (Optional) a globally unique label.
+     *        If missing, use automatic labelling.
+     */
     public addNode(type: NodeType, id: ElementId, label?: Label): Node {
         if (this.elements.has(id)) {
             throw Error("id already exists");
@@ -110,7 +138,15 @@ class Graph {
         }
     }
 
-    // U-label
+    /**
+     * This method updates label of an existing element.
+     *
+     * It updates both the label index (i.e., deletes the old label, and
+     * adds the new label), and the element label fields.
+     *
+     * @param id the id of the element
+     * @param label the label of the element
+     */
     public setLabel(id: ElementId, label: Label): Element {
         // check that id exists
         const e = this.elements.get(id);
@@ -128,7 +164,11 @@ class Graph {
     }
 
     /**
-     * add required element to converter.
+     * Add required element to converter (using Label).
+     *
+     * The internal remembers the required element using ElementID,
+     * which is supposed to remain immutable, whereas the Label
+     * might change.
      */
     public setRequiredInputPerUnit(
         id: ElementId,
@@ -165,7 +205,27 @@ class Graph {
         return returnMap;
     }
 
-    // D
+    /**
+     * Delete an element.
+     *
+     * ## Specific Behavior
+     *
+     * ### General
+     * The delete methods keeps all data consistency.
+     * It clears up ElementId index and label index.
+     * It clears up associated edges (dangling edges are not allowed).
+     * It clears up all input / output linking fields (no dangling reference).
+     *
+     * ### Edge
+     * When deleting an edge, also unset the input / output fields
+     * of connected Nodes (if any).
+     *
+     * ### Nodes
+     * When deleting a node, also delete all associated edges to that node,
+     * and unset all related input / output linking fields of those edges.
+     *
+     * @param id
+     */
     public deleteElement(id: ElementId) {
         const e = this.elements.get(id);
         if (!e) return;
@@ -211,6 +271,10 @@ class Graph {
         this.labels.delete(e.getLabel());
     }
 
+    /**
+     * Return a VariableScope object for `mathjs` expressions.
+     * See `GraphVariableScope` for details.
+     */
     public variableScopes(): VariableScope {
         return new GraphVariableScope(this);
     }
@@ -306,9 +370,25 @@ class Graph {
     }
 }
 
-// Newly generated variables are not written into Graph.
-// They are stored only into the local cache in GraphVariableScope.
-// Thus, the computation does not have side effects.
+/**
+ * The Graph Variable Scope provides `mathjs` package
+ * a usable variable query interface to `mathjs` expression evaluation.
+ *
+ * It indexes states of the graph using element Labels.
+ * Specifically, `Pool.state` by Pool labels, and `Edge.rate` by Edge labels.
+ *
+ * It also serves as a cache storage for intermediate variables during `mathjs`
+ * computation.
+ *
+ * It does not have side effect to graph variables (i.e., you cannot
+ * alter the value of some `Pool.state` simply by assigning it a new value
+ * in `mathjs` expressions). In that case, a temporary variable is created
+ * and stored in `GraphVariableScope.localCache`.
+ *
+ * Readings prioritize `GraphVariableScope.localCache` over `Graph` states.
+ *
+ * All writings write to `GraphVariableScope.localCache`.
+ */
 class GraphVariableScope implements VariableScope {
     private graph;
     private localCache: Map<Label, any>;
