@@ -59,7 +59,7 @@ class Graph {
      * @param label (optional) a globally unique label.
      *        If missing, use automatic labelling.
      */
-    public connect(
+    public addEdge(
         edgeId: ElementId,
         fromId: ElementId,
         toId: ElementId,
