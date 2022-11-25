@@ -29,6 +29,7 @@ export type GraphCheckNoError = {
 
 export type GraphCheckWarningResult = {
     type: CheckResultType.Warning;
+    errorMsg: string;
     cyclicConverters: Set<ElementId>[];
 };
 
@@ -318,6 +319,7 @@ class Graph {
         if (cyclicConverters.length > 0) {
             return {
                 type: CheckResultType.Warning,
+                errorMsg: "found cyclic converters",
                 cyclicConverters,
             };
         } else {
