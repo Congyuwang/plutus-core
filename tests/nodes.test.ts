@@ -98,7 +98,7 @@ describe("test Gate", () => {
             stats.set(k, 0);
         }
         const ROUND = 100000;
-        const sumOfWeights = sum([...weightMap.values()]);
+        const sumOfWeights = sum(...weightMap.values());
         const expected = [...weightMap.values()].map(
             w => (w * ROUND) / sumOfWeights
         );
