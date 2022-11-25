@@ -31,15 +31,15 @@ export type CyclicConverterGroups = {
  * @param graph the Graph object.
  * @param isCheckMode whether this run is for checking Graph
  */
-export async function compileGraph(
+export function compileGraph(
     graph: Graph,
     isCheckMode: boolean = false
-): Promise<CompiledGraph> {
+): CompiledGraph {
     const compiledGraph: CompiledGraph = [];
-    const poolGroups = await cutAtPoolInput(graph, isCheckMode);
+    const poolGroups = cutAtPoolInput(graph, isCheckMode);
     for (const group of poolGroups) {
-        const converterGroups = await cutAtConverterInput(group, isCheckMode);
-        compiledGraph.push(await computeSubGroupOrders(graph, converterGroups));
+        const converterGroups = cutAtConverterInput(group, isCheckMode);
+        compiledGraph.push(computeSubGroupOrders(graph, converterGroups));
     }
     return compiledGraph;
 }
@@ -52,15 +52,15 @@ export async function compileGraph(
  * @param graph: the graph object
  * @param isCheckMode whether this run is for checking Graph
  */
-async function cutAtPoolInput(
+function cutAtPoolInput(
     graph: Graph,
     isCheckMode: boolean = false
-): Promise<Map<ElementId, Element>[]> {
+): Map<ElementId, Element>[] {
     const visited: Set<ElementId> = new Set();
     const groups: Map<ElementId, Element>[] = [];
     for (const id of graph.elements.keys()) {
         if (visited.has(id)) continue;
-        const newGroup = await buildGroup(
+        const newGroup = buildGroup(
             graph.elements,
             id,
             true,
@@ -80,15 +80,15 @@ async function cutAtPoolInput(
  * @param graphElements
  * @param isCheckMode whether this run is for checking Graph
  */
-async function cutAtConverterInput(
+function cutAtConverterInput(
     graphElements: Map<ElementId, Element>,
     isCheckMode: boolean = false
-): Promise<Map<ElementId, Element>[]> {
+): Map<ElementId, Element>[] {
     const visited: Set<ElementId> = new Set();
     const groups: Map<ElementId, Element>[] = [];
     for (const id of graphElements.keys()) {
         if (visited.has(id)) continue;
-        const newGroup = await buildGroup(
+        const newGroup = buildGroup(
             graphElements,
             id,
             true,
@@ -109,10 +109,10 @@ async function cutAtConverterInput(
  * @return If converter causes a priority cycle: return undefined;
  *         Otherwise, return execution order of subgroups.
  */
-async function computeSubGroupOrders(
+function computeSubGroupOrders(
     graph: Graph,
     groups: Map<ElementId, Element>[]
-): Promise<ParallelGroup> {
+): ParallelGroup {
     const groupToConverter: Map<number, ElementId> = new Map();
     const converterToGroup: Map<ElementId, number> = new Map();
     // Pool or Converter to edge
@@ -181,16 +181,16 @@ async function computeSubGroupOrders(
  * @param isCheckMode use all output edges of `Gate`
  * @param visited DFS `visited` table
  */
-async function buildGroup(
+function buildGroup(
     graphElements: Map<ElementId, Element>,
     startElement: ElementId,
     cutAtPoolInput: boolean,
     cutAtConverterOutput: boolean,
     isCheckMode: boolean,
     visited: Set<ElementId>
-): Promise<Map<ElementId, Element>> {
+): Map<ElementId, Element> {
     const group: Map<ElementId, Element> = new Map();
-    await buildGroupInner(
+    buildGroupInner(
         graphElements,
         startElement,
         cutAtPoolInput,
@@ -201,7 +201,7 @@ async function buildGroup(
     return group;
 }
 
-async function buildGroupInner(
+function buildGroupInner(
     graphElements: Map<ElementId, Element>,
     currentElement: ElementId,
     cutAtPoolInput: boolean,
@@ -226,7 +226,7 @@ async function buildGroupInner(
     );
     // recursively add to group
     for (const elementId of neighbors) {
-        await buildGroupInner(
+        buildGroupInner(
             graphElements,
             elementId,
             cutAtPoolInput,

@@ -300,15 +300,15 @@ class Graph {
     /**
      * Compute the next tick state of the graph
      */
-    public async nextTick() {
-        await nextTick(this);
+    public nextTick() {
+        nextTick(this);
     }
 
     /**
      * Check whether the graph has any error or warnings.
      */
-    public async checkGraph(): Promise<GraphCheckResult> {
-        const compiledGraph = await compileGraph(this, true);
+    public checkGraph(): GraphCheckResult {
+        const compiledGraph = compileGraph(this, true);
         const cyclicConverters: Set<ElementId>[] = [];
         compiledGraph.forEach(g => {
             if (g.type === ParallelGroupTypes.Cyclic) {

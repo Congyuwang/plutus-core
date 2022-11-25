@@ -19,15 +19,15 @@ type Packet = {
  * Update graph information to nextTick.
  * @param graph the Graph object
  */
-export default async function nextTick(graph: Graph) {
+export default function nextTick(graph: Graph) {
     // update Pool states, and activate Gates.
-    await activatePoolsAndGates(graph);
+    activatePoolsAndGates(graph);
     // compute simulation execution order
-    const compiledGraph = await compileGraph(graph);
+    const compiledGraph = compileGraph(graph);
     // variable scope for evaluating conditions and functions
     const scope = graph.variableScope();
     // actually execute graph
-    const outputs = await executeCompiledGraph(compiledGraph, scope);
+    const outputs = executeCompiledGraph(compiledGraph, scope);
     // write to graph
     writeToGraph(graph, outputs);
 }
@@ -36,7 +36,7 @@ export default async function nextTick(graph: Graph) {
  * Update all Pool states and activate gates.
  * @param graph the graph computed
  */
-async function activatePoolsAndGates(graph: Graph) {
+function activatePoolsAndGates(graph: Graph) {
     for (const e of graph.elements.values()) {
         switch (e.type) {
             case ElementType.Pool:
@@ -53,20 +53,20 @@ async function activatePoolsAndGates(graph: Graph) {
  * @param compiledGraph execution order and other info.
  * @param scope for evaluating conditions and functions
  */
-async function executeCompiledGraph(
+function executeCompiledGraph(
     compiledGraph: CompiledGraph,
     scope: VariableScope
-): Promise<Map<ElementId, Packet[]>> {
+): Map<ElementId, Packet[]> {
     let allOutputs: Map<ElementId, Packet[]> = new Map();
     for (const group of compiledGraph) {
         switch (group.type) {
             case ParallelGroupTypes.Cyclic: {
-                const outputs = await executeCyclicSubgroup(group, scope);
+                const outputs = executeCyclicSubgroup(group, scope);
                 mergeOutputs(allOutputs, outputs);
                 break;
             }
             case ParallelGroupTypes.Ordered: {
-                const outputs = await executeOrderedSubgroup(group, scope);
+                const outputs = executeOrderedSubgroup(group, scope);
                 mergeOutputs(allOutputs, outputs);
                 break;
             }
@@ -75,15 +75,15 @@ async function executeCompiledGraph(
     return allOutputs;
 }
 
-async function executeOrderedSubgroup(
+function executeOrderedSubgroup(
     orderedSubgroups: OrderedConverterGroups,
     scope: VariableScope
-): Promise<Map<ElementId, Packet[]>> {
+): Map<ElementId, Packet[]> {
     let allOutputs: Map<ElementId, Packet[]> = new Map();
     for (const i of orderedSubgroups.groupExecutionOrder) {
         const subgraph = orderedSubgroups.groups[i];
         const entryPoints = orderedSubgroups.entryPointsToGroup.get(i);
-        const outputs = await executeSubgroup(subgraph, entryPoints, scope);
+        const outputs = executeSubgroup(subgraph, entryPoints, scope);
 
         const converterId = orderedSubgroups.converterOfGroup.get(i);
         const converter = converterId ? subgraph.get(converterId) : undefined;
@@ -113,14 +113,14 @@ async function executeOrderedSubgroup(
     return allOutputs;
 }
 
-async function executeCyclicSubgroup(
+function executeCyclicSubgroup(
     cyclicSubgroup: CyclicConverterGroups,
     scope: VariableScope
-): Promise<Map<ElementId, Packet[]>> {
+): Map<ElementId, Packet[]> {
     let allOutputs: Map<ElementId, Packet[]> = new Map();
     for (const [i, subgraph] of cyclicSubgroup.groups.entries()) {
         const entryPoints = cyclicSubgroup.entryPointsToGroup.get(i);
-        const outputs = await executeSubgroup(subgraph, entryPoints, scope);
+        const outputs = executeSubgroup(subgraph, entryPoints, scope);
         mergeOutputs(allOutputs, outputs);
     }
     return allOutputs;
@@ -133,11 +133,11 @@ async function executeCyclicSubgroup(
  * - Edges and Gates form chains.
  * - Or, Edges and Gates form a cycle, resulting in no entry point.
  */
-async function executeSubgroup(
+function executeSubgroup(
     subgraph: Map<ElementId, Element>,
     entryPoints: Set<ElementId> | undefined,
     scope: VariableScope
-): Promise<Map<ElementId, Packet[]>> {
+): Map<ElementId, Packet[]> {
     const output: Map<ElementId, Packet[]> = new Map();
     if (!entryPoints) {
         // dead group (i.e. group with no input from Converter or Pool.)
