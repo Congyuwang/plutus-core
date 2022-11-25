@@ -60,6 +60,9 @@ describe("test graph functionality", () => {
         expect(() => graph.addEdge("e-4", "p-5", "p-0")).toThrow(
             Error("connecting Node with non-existing id")
         );
+        expect(() => graph.addEdge("e-4", "p-3", "p-3")).toThrow(
+            Error("cannot connect to self (self loop not allowed)")
+        );
         graph.addEdge("e-4", "p-3", "p-0");
         if (p0?.type === ElementType.Pool) {
             expect(p0._getInput()).toEqual("e-4");
