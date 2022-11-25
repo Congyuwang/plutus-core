@@ -52,7 +52,7 @@ export function compileGraph(
  * @param graph: the graph object
  * @param isCheckMode whether this run is for checking Graph
  */
-function cutAtPoolInput(
+export function cutAtPoolInput(
     graph: Graph,
     isCheckMode: boolean = false
 ): Map<ElementId, Element>[] {
@@ -80,7 +80,7 @@ function cutAtPoolInput(
  * @param graphElements
  * @param isCheckMode whether this run is for checking Graph
  */
-function cutAtConverterInput(
+export function cutAtConverterInput(
     graphElements: Map<ElementId, Element>,
     isCheckMode: boolean = false
 ): Map<ElementId, Element>[] {
@@ -109,7 +109,7 @@ function cutAtConverterInput(
  * @return If converter causes a priority cycle: return undefined;
  *         Otherwise, return execution order of subgroups.
  */
-function computeSubGroupOrders(
+export function computeSubGroupOrders(
     graph: Graph,
     groups: Map<ElementId, Element>[]
 ): ParallelGroup {

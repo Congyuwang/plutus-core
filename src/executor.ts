@@ -10,7 +10,7 @@ import {
 import { VariableScope } from "./formula";
 import assert from "assert";
 
-type Packet = {
+export type Packet = {
     from: ElementId;
     value: number;
 };
@@ -225,7 +225,10 @@ function doEdgeWork(
  * @param graph the graph object
  * @param allOutputs outputs collected from all subgraph.
  */
-function writeToGraph(graph: Graph, allOutputs: Map<ElementId, Packet[]>) {
+export function writeToGraph(
+    graph: Graph,
+    allOutputs: Map<ElementId, Packet[]>
+) {
     for (const [id, packets] of allOutputs) {
         const e = graph.getElement(id);
         switch (e?.type) {
@@ -242,7 +245,7 @@ function writeToGraph(graph: Graph, allOutputs: Map<ElementId, Packet[]>) {
     }
 }
 
-function mergeOutputs(
+export function mergeOutputs(
     to: Map<ElementId, Packet[]>,
     from: Map<ElementId, Packet[]>
 ) {
