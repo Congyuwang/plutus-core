@@ -13,7 +13,7 @@ import {
     computeSubGroupOrders,
     cutAtConverterInput,
     cutAtPoolInput,
-    ParallelGroupTypes,
+    ConverterGroupTypes,
 } from "../src/compiler";
 
 describe("test compiler module", () => {
@@ -193,11 +193,11 @@ describe("test compiler module", () => {
         });
         const group0 = compiledGraph.find(g => g.groups.length === 1);
         const group1 = compiledGraph.find(
-            g => g.groups.length === 2 && g.type === ParallelGroupTypes.Ordered
+            g => g.groups.length === 2 && g.type === ConverterGroupTypes.Ordered
         );
         const group2 = compiledGraph.find(g => g.groups.length === 3);
         const group3 = compiledGraph.find(
-            g => g.groups.length === 2 && g.type === ParallelGroupTypes.Cyclic
+            g => g.groups.length === 2 && g.type === ConverterGroupTypes.Cyclic
         );
         expect(group0).not.toEqual(undefined);
         expect(group1).not.toEqual(undefined);

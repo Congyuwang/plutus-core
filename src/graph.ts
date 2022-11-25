@@ -11,7 +11,7 @@ import {
     Pool,
 } from "./nodes";
 import { VariableScope } from "./formula";
-import { compileGraph, ParallelGroupTypes } from "./compiler";
+import { compileGraph, ConverterGroupTypes } from "./compiler";
 import nextTick from "./executor";
 
 export const DEFAULT_WEIGHT = 1;
@@ -315,7 +315,7 @@ class Graph {
         const compiledGraph = compileGraph(this, true);
         const cyclicConverters: Set<ElementId>[] = [];
         compiledGraph.forEach(g => {
-            if (g.type === ParallelGroupTypes.Cyclic) {
+            if (g.type === ConverterGroupTypes.Cyclic) {
                 cyclicConverters.push(new Set(g.converterOfGroup.values()));
             }
         });

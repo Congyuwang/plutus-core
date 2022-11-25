@@ -5,7 +5,7 @@ import {
     compileGraph,
     CyclicConverterGroups,
     OrderedConverterGroups,
-    ParallelGroupTypes,
+    ConverterGroupTypes,
 } from "./compiler";
 import { VariableScope } from "./formula";
 import assert from "assert";
@@ -43,12 +43,12 @@ function executeCompiledGraph(
     let allOutputs: Map<ElementId, Packet[]> = new Map();
     for (const group of compiledGraph) {
         switch (group.type) {
-            case ParallelGroupTypes.Cyclic: {
+            case ConverterGroupTypes.Cyclic: {
                 const outputs = executeCyclicSubgroup(group, scope);
                 mergeOutputs(allOutputs, outputs);
                 break;
             }
-            case ParallelGroupTypes.Ordered: {
+            case ConverterGroupTypes.Ordered: {
                 const outputs = executeOrderedSubgroup(group, scope);
                 mergeOutputs(allOutputs, outputs);
                 break;

@@ -7,19 +7,19 @@ export type CompiledGraph = ParallelGroup[];
 export type ParallelGroup = OrderedConverterGroups | CyclicConverterGroups;
 // Apply different execution strategies depending on whether converters
 // impose upon each other cyclic execution priority.
-export enum ParallelGroupTypes {
+export enum ConverterGroupTypes {
     Ordered = "ordered",
     Cyclic = "cyclic",
 }
 export type OrderedConverterGroups = {
-    type: ParallelGroupTypes.Ordered;
+    type: ConverterGroupTypes.Ordered;
     groups: Map<ElementId, Element>[];
     groupExecutionOrder: number[];
     converterOfGroup: Map<number, ElementId>;
     entryPointsToGroup: Map<number, Set<ElementId>>;
 };
 export type CyclicConverterGroups = {
-    type: ParallelGroupTypes.Cyclic;
+    type: ConverterGroupTypes.Cyclic;
     groups: Map<ElementId, Element>[];
     converterOfGroup: Map<number, ElementId>;
     entryPointsToGroup: Map<number, Set<ElementId>>;
@@ -190,7 +190,7 @@ export function computeSubGroupOrders(
     }
     if (hasCycle(directedGraph)) {
         return {
-            type: ParallelGroupTypes.Cyclic,
+            type: ConverterGroupTypes.Cyclic,
             groups,
             converterOfGroup: groupToConverter,
             entryPointsToGroup,
@@ -198,7 +198,7 @@ export function computeSubGroupOrders(
     } else {
         const order = topologicalSort(directedGraph).map(i => parseInt(i, 10));
         return {
-            type: ParallelGroupTypes.Ordered,
+            type: ConverterGroupTypes.Ordered,
             groups,
             groupExecutionOrder: order,
             converterOfGroup: groupToConverter,
