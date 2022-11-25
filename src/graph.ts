@@ -17,8 +17,8 @@ import nextTick from "./executor";
 export const DEFAULT_WEIGHT = 1;
 
 export enum CheckResultType {
-    NoError,
-    Warning,
+    NoError = "no error",
+    Warning = "warning",
 }
 
 export type GraphCheckResult = GraphCheckWarningResult | GraphCheckNoError;
