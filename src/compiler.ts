@@ -184,7 +184,7 @@ export function computeSubGroupOrders(
     }
     for (const [groupId, converterId] of groupToConverter.entries()) {
         const dependentGroup = converterToGroup.get(converterId);
-        if (dependentGroup) {
+        if (dependentGroup !== undefined) {
             directedGraph.mergeEdge(groupId, dependentGroup);
         }
     }
@@ -297,14 +297,14 @@ function getNeighborsOf(
                 neighbors.push(input);
             }
             const output = element._getOutput();
-            if (output) {
+            if (output !== undefined) {
                 neighbors.push(output);
             }
             break;
         }
         case ElementType.Gate: {
             const input = element._getInput();
-            if (input) {
+            if (input !== undefined) {
                 neighbors.push(input);
             }
             if (isCheckMode) {
@@ -318,7 +318,7 @@ function getNeighborsOf(
                 }
             } else {
                 const output = element._getOutput();
-                if (output) {
+                if (output !== undefined) {
                     neighbors.push(output);
                 }
             }

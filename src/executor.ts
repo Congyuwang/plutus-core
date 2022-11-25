@@ -79,7 +79,7 @@ function executeOrderedSubgroup(
             ) {
                 // write to converter if this subgroup has a converter
                 const converterOutput = outputs.get(converterId);
-                if (converterOutput) {
+                if (converterOutput !== undefined) {
                     for (const packet of converterOutput) {
                         converter._addToBuffer(packet.from, packet.value);
                     }
@@ -188,18 +188,16 @@ function doEdgeWork(
     // recurse if the next element is Gate
     if (toElement?.type === ElementType.Gate) {
         const nextEdge = toElement._getOutput();
-        if (nextEdge) {
+        if (nextEdge !== undefined) {
             // continue forwarding if edge connected to Gate
             doEdgeWork(subgraph, nextEdge, visited, outputs, scope, nextPacket);
         }
     } else {
         // write to the output in cases of Pool or Converter
-        if (nextPacket) {
-            if (!outputs.has(edge.toNode)) {
-                outputs.set(edge.toNode, []);
-            }
-            outputs.get(edge.toNode)?.push(nextPacket);
+        if (!outputs.has(edge.toNode)) {
+            outputs.set(edge.toNode, []);
         }
+        outputs.get(edge.toNode)?.push(nextPacket);
     }
 }
 

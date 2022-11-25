@@ -216,9 +216,9 @@ class Graph {
         const returnMap: Map<Label, number> = new Map();
         const requiredInput = converter._getRequiredInputPerUnit();
         for (const [id, requirement] of requiredInput) {
-            const label = this.getElement(id);
-            if (label) {
-                returnMap.set(label.getLabel(), requirement);
+            const element = this.getElement(id);
+            if (element !== undefined) {
+                returnMap.set(element.getLabel(), requirement);
             } else {
                 // remove invalid input entries
                 requiredInput.delete(id);
@@ -254,17 +254,17 @@ class Graph {
         switch (e.type) {
             case ElementType.Pool:
                 const poolInputEdge = e._getInput();
-                if (poolInputEdge) {
+                if (poolInputEdge !== undefined) {
                     this.deleteElement(poolInputEdge);
                 }
                 const poolOutputEdge = e._getOutput();
-                if (poolOutputEdge) {
+                if (poolOutputEdge !== undefined) {
                     this.deleteElement(poolOutputEdge);
                 }
                 break;
             case ElementType.Converter:
                 const converterOutputEdge = e._getOutput();
-                if (converterOutputEdge) {
+                if (converterOutputEdge !== undefined) {
                     this.deleteElement(converterOutputEdge);
                 }
                 const converterInputEdges = e._getInputs();
@@ -274,7 +274,7 @@ class Graph {
                 break;
             case ElementType.Gate:
                 const gateInputEdge = e._getInput();
-                if (gateInputEdge) {
+                if (gateInputEdge !== undefined) {
                     this.deleteElement(gateInputEdge);
                 }
                 const gateOutputEdges = e._getOutputs().keys();
@@ -285,8 +285,8 @@ class Graph {
             case ElementType.Edge:
                 const from = this.getElement(e.fromNode);
                 const to = this.getElement(e.toNode);
-                if (from) Graph.deleteNodeOutput(from, id);
-                if (to) Graph.deleteNodeInput(to, id);
+                if (from !== undefined) Graph.deleteNodeOutput(from, id);
+                if (to !== undefined) Graph.deleteNodeInput(to, id);
                 break;
         }
         this.elements.delete(id);
@@ -343,7 +343,7 @@ class Graph {
             default:
                 // delete current output edge if Pool, Converter
                 const currentOutputEdge = from._getOutput();
-                if (currentOutputEdge) {
+                if (currentOutputEdge !== undefined) {
                     this.deleteElement(currentOutputEdge);
                 }
                 from._setOutput(edgeId);
@@ -360,7 +360,7 @@ class Graph {
             case ElementType.Gate:
                 const currentOutputEdge = to._getInput();
                 // delete current input edge if Pool, Gate
-                if (currentOutputEdge) {
+                if (currentOutputEdge !== undefined) {
                     this.deleteElement(currentOutputEdge);
                 }
                 to._setInput(edgeId);
