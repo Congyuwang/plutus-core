@@ -272,7 +272,7 @@ function getNeighborsOf(
         }
         case ElementType.Gate: {
             const input = element._getInput();
-            if (input && !cutAtPoolInput) {
+            if (input) {
                 neighbors.push(input);
             }
             if (isCheckMode) {
