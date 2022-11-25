@@ -168,31 +168,34 @@ function doEdgeWork(
     if (edge?.type !== ElementType.Edge) return; // never happens
 
     // source
-    let nextPacket: Packet | undefined = {
+    let nextPacket: Packet = {
         from: edge.fromNode,
         value: 0,
     };
     const fromElement = subgraph.get(edge.fromNode);
     switch (fromElement?.type) {
-        case ElementType.Converter:
+        case ElementType.Converter: {
             nextPacket.value = fromElement._takeFromState(
                 edge.getRate(),
                 scope
             );
             break;
-        case ElementType.Pool:
+        }
+        case ElementType.Pool: {
             nextPacket.value = fromElement._takeFromPool(edge.getRate());
             break;
-        case ElementType.Gate:
+        }
+        case ElementType.Gate: {
             if (!packet) {
-                // forward nothing if gate does not come with packet
-                nextPacket = undefined;
+                // nothing to forward, end recursion
+                return;
             } else {
                 // forwarding with possible loss
                 nextPacket.value = Math.min(packet.value, edge.getRate());
                 nextPacket.from = packet.from;
             }
             break;
+        }
         case ElementType.Edge:
             throw Error("bad data structure (edge-edge connection)");
     }
