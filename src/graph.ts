@@ -11,9 +11,26 @@ import {
     Pool,
 } from "./nodes";
 import { VariableScope } from "./formula";
+import { compileGraph, ParallelGroupTypes } from "./compiler";
 import nextTick from "./runner";
 
-const DEFAULT_WEIGHT = 1;
+export const DEFAULT_WEIGHT = 1;
+
+export enum CheckResultType {
+    NoError,
+    Warning,
+}
+
+export type GraphCheckResult = GraphCheckWarningResult | GraphCheckNoError;
+
+export type GraphCheckNoError = {
+    type: CheckResultType.NoError;
+};
+
+export type GraphCheckWarningResult = {
+    type: CheckResultType.Warning;
+    cyclicConverters: Set<ElementId>[];
+};
 
 class Graph {
     // Mapping from globally unique ID to Edge | Node.
@@ -276,7 +293,7 @@ class Graph {
      * Return a VariableScope object for `mathjs` expressions.
      * See `GraphVariableScope` for details.
      */
-    public variableScopes(): VariableScope {
+    public variableScope(): VariableScope {
         return new GraphVariableScope(this);
     }
 
@@ -285,6 +302,29 @@ class Graph {
      */
     public async nextTick() {
         await nextTick(this);
+    }
+
+    /**
+     * Check whether the graph has any error or warnings.
+     */
+    public async checkGraph(): Promise<GraphCheckResult> {
+        const compiledGraph = await compileGraph(this, true);
+        const cyclicConverters: Set<ElementId>[] = [];
+        compiledGraph.forEach(g => {
+            if (g.type === ParallelGroupTypes.Cyclic) {
+                cyclicConverters.push(new Set(g.converterOfGroup.values()));
+            }
+        });
+        if (cyclicConverters.length > 0) {
+            return {
+                type: CheckResultType.Warning,
+                cyclicConverters,
+            };
+        } else {
+            return {
+                type: CheckResultType.NoError,
+            };
+        }
     }
 
     // node.output = edge.from

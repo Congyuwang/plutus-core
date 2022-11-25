@@ -43,13 +43,13 @@ describe("test Pool", () => {
         expect(pool.getState()).toEqual(100);
 
         // add and subtract
-        expect(pool.takeFromPool(20)).toEqual(20);
+        expect(pool._takeFromPool(20)).toEqual(20);
         expect(pool.getState()).toEqual(80);
-        expect(pool.sendToPool(100)).toEqual(20);
+        expect(pool._addToPool(100)).toEqual(20);
         expect(pool.getState()).toEqual(100);
         pool.setCapacity(150);
-        expect(pool.sendToPool(100)).toEqual(50);
-        expect(pool.takeFromPool(200)).toEqual(150);
+        expect(pool._addToPool(100)).toEqual(50);
+        expect(pool._takeFromPool(200)).toEqual(150);
         expect(pool.getState()).toEqual(0);
     });
 });
@@ -154,10 +154,10 @@ describe("test Converter", () => {
                 ["004", 16],
             ])
         );
-        converter.addToBuffer("001", 14);
-        converter.addToBuffer("003", 4);
+        converter._addToBuffer("001", 14);
+        converter._addToBuffer("003", 4);
         expect(converter.maximumConvertable(MapScope.fromObj({}))).toEqual(0);
-        converter.addToBuffer("004", 100);
+        converter._addToBuffer("004", 100);
         expect(converter._takeFromState(10, MapScope.fromObj({}))).toEqual(0.5);
         expect(converter.getBuffer()).toEqual(
             new Map([
@@ -166,7 +166,7 @@ describe("test Converter", () => {
                 ["004", 92],
             ])
         );
-        converter.addToBuffer("003", 16);
+        converter._addToBuffer("003", 16);
         expect(converter.maximumConvertable(MapScope.fromObj({}))).toEqual(2);
         expect(converter._takeFromState(1, MapScope.fromObj({}))).toEqual(1);
         expect(converter.getBuffer()).toEqual(

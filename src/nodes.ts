@@ -177,7 +177,7 @@ class Pool {
     }
 
     // return the actual number added to this pool
-    sendToPool(delta: number): number {
+    _addToPool(delta: number): number {
         if (delta < 0) {
             throw Error("must add a non-negative number");
         }
@@ -187,12 +187,12 @@ class Pool {
     }
 
     // return the actual number subtracted from this pool
-    takeFromPool(delta: number): number {
-        if (delta < 0) {
+    _takeFromPool(amount: number): number {
+        if (amount < 0) {
             throw Error("must subtract a non-negative number");
         }
         const oldState = this.state;
-        this.setState(this.state - delta);
+        this.setState(this.state - amount);
         return oldState - this.state;
     }
 
@@ -380,7 +380,7 @@ class Converter {
     }
 
     // add new input element from edges
-    addToBuffer(elementId: ElementId, amount: number) {
+    _addToBuffer(elementId: ElementId, amount: number) {
         if (amount < 0) {
             throw Error("must add non-negative amount to element buffer");
         }
