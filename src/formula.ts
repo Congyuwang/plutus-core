@@ -54,6 +54,9 @@ class NumericFn extends _Formula {
         if (math.isBigNumber(lastOutput)) {
             return math.number(lastOutput);
         }
+        if (typeof lastOutput === "number") {
+            return lastOutput;
+        }
         throw Error(`the last expression is expected to return a number`);
     }
 }
