@@ -20,8 +20,6 @@ export type Packet = {
  * @param graph the Graph object
  */
 export default function nextTick(graph: Graph) {
-    // update Pool states, and activate Gates.
-    activatePoolsAndGates(graph);
     // compute simulation execution order
     const compiledGraph = compileGraph(graph);
     // variable scope for evaluating conditions and functions
@@ -30,21 +28,6 @@ export default function nextTick(graph: Graph) {
     const outputs = executeCompiledGraph(compiledGraph, scope);
     // write to graph
     writeToGraph(graph, outputs);
-}
-
-/**
- * Update all Pool states and activate gates.
- * @param graph the graph computed
- */
-export function activatePoolsAndGates(graph: Graph) {
-    for (const e of graph.elements.values()) {
-        switch (e.type) {
-            case ElementType.Pool:
-            case ElementType.Gate:
-                e._nextTick(graph.variableScope());
-                break;
-        }
-    }
 }
 
 /**

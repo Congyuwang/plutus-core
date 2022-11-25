@@ -35,8 +35,11 @@ export function compileGraph(
     graph: Graph,
     isCheckMode: boolean = false
 ): CompiledGraph {
+    const activeGraphElements = isCheckMode
+        ? graph.elements
+        : activatePoolsAndGates(graph);
     const compiledGraph: CompiledGraph = [];
-    const poolGroups = cutAtPoolInput(graph, isCheckMode);
+    const poolGroups = cutAtPoolInput(activeGraphElements, isCheckMode);
     for (const group of poolGroups) {
         const converterGroups = cutAtConverterInput(group, isCheckMode);
         compiledGraph.push(computeSubGroupOrders(graph, converterGroups));
@@ -45,23 +48,52 @@ export function compileGraph(
 }
 
 /**
+ * Update all Pool states and activate gates before compiling.
+ * @param graph the graph computed
+ * @return active graph elements (with disabled edges removed).
+ */
+export function activatePoolsAndGates(graph: Graph): Map<ElementId, Element> {
+    const disabled: Set<ElementId> = new Set();
+    for (const e of graph.elements.values()) {
+        switch (e.type) {
+            case ElementType.Pool:
+                e._nextTick(graph.variableScope());
+                break;
+            case ElementType.Gate:
+                e._nextTick();
+                const selected = e._getOutput();
+                const outputs = e._getOutputs().keys();
+                for (const id of outputs) {
+                    if (id !== selected) {
+                        disabled.add(id);
+                    }
+                }
+                break;
+        }
+    }
+    return new Map(
+        Array.from(graph.elements).filter(([id]) => !disabled.has(id))
+    );
+}
+
+/**
  * DFS to cut graph into groups that can be executed in parallel.
  * Specifically, cut them at the output point of Pools.
  *
  * Each subgraph contains at most one `Pool` as an input Object.
- * @param graph: the graph object
+ * @param graphElements: elements of graph, with disabled elements removed
  * @param isCheckMode whether this run is for checking Graph
  */
 export function cutAtPoolInput(
-    graph: Graph,
+    graphElements: Map<ElementId, Element>,
     isCheckMode: boolean = false
 ): Map<ElementId, Element>[] {
     const visited: Set<ElementId> = new Set();
     const groups: Map<ElementId, Element>[] = [];
-    for (const id of graph.elements.keys()) {
+    for (const id of graphElements.keys()) {
         if (visited.has(id)) continue;
         const newGroup = buildGroup(
-            graph.elements,
+            graphElements,
             id,
             true,
             false,
