@@ -147,6 +147,9 @@ export function computeSubGroupOrders(
 
     // compute group priority using DAG and topological sort
     const directedGraph = new DirectedGraph();
+    for (const i of groups.keys()) {
+        directedGraph.addNode(i);
+    }
     for (const [groupId, converterId] of groupToConverter.entries()) {
         const dependentGroup = converterToGroup.get(converterId);
         if (dependentGroup) {
