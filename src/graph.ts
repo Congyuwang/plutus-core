@@ -450,13 +450,19 @@ class GraphVariableScope implements VariableScope {
 
     get(label: Label): any {
         const checkLocal = this.localCache.get(label);
-        if (checkLocal) return checkLocal;
-        return this.graph.getStateByLabel(label);
+        if (checkLocal !== undefined) {
+            return checkLocal;
+        }
+        const fromGraph = this.graph.getStateByLabel(label);
+        if (fromGraph !== undefined) {
+            this.localCache.set(label, fromGraph);
+        }
+        return fromGraph;
     }
 
     // always check localCache first
     has(label: Label): boolean {
-        return !!this.get(label);
+        return this.get(label) !== undefined;
     }
 
     keys(): Iterator<Label> {
