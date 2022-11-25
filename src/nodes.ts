@@ -489,6 +489,7 @@ class Converter {
     }
 
     private consumeBuffer(unitsProduced: number) {
+        if (unitsProduced <= 0) return;
         for (const [id, value] of this.requiredInputPerUnit.entries()) {
             const inputConsumed = value * unitsProduced;
             this.buffer.set(id, this.buffer.get(id)! - inputConsumed);
