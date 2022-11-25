@@ -92,6 +92,9 @@ class Graph {
         if (this.elements.has(edgeId)) {
             throw Error("edge id already exists");
         }
+        if (fromId === toId) {
+            throw Error("cannot connect to self (self loop not allowed)");
+        }
         // from.output = edge
         this.setNodeOutputToEdge(from, edgeId);
         // to.input = edge
