@@ -196,7 +196,7 @@ export function computeSubGroupOrders(
             entryPointsToGroup,
         };
     } else {
-        const order = topologicalSort(directedGraph).map(parseInt);
+        const order = topologicalSort(directedGraph).map(i => parseInt(i, 10));
         return {
             type: ParallelGroupTypes.Ordered,
             groups,
