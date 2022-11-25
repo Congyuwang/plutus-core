@@ -36,7 +36,7 @@ export default function nextTick(graph: Graph) {
  * Update all Pool states and activate gates.
  * @param graph the graph computed
  */
-function activatePoolsAndGates(graph: Graph) {
+export function activatePoolsAndGates(graph: Graph) {
     for (const e of graph.elements.values()) {
         switch (e.type) {
             case ElementType.Pool:
