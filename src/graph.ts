@@ -12,7 +12,7 @@ import {
 } from "./nodes";
 import { VariableScope } from "./formula";
 import { compileGraph, ParallelGroupTypes } from "./compiler";
-import nextTick from "./runner";
+import nextTick from "./executor";
 
 export const DEFAULT_WEIGHT = 1;
 
