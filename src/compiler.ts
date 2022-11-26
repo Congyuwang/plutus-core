@@ -35,9 +35,7 @@ export function compileGraph(
     graph: Graph,
     isCheckMode: boolean = false
 ): CompiledGraph {
-    const activeGraphElements = isCheckMode
-        ? graph.elements
-        : activatePoolsAndGates(graph);
+    const activeGraphElements = activatePoolsAndGates(graph, isCheckMode);
     const compiledGraph: CompiledGraph = [];
     const poolGroups = cutAtPoolInput(activeGraphElements, isCheckMode);
     for (const group of poolGroups) {
@@ -50,22 +48,35 @@ export function compileGraph(
 /**
  * Update all Pool states and activate gates before compiling.
  * @param graph the graph computed
+ * @param checkMode if running for checking graph, which does not
+ *        change states of Gate or Pool.
  * @return active graph elements (with disabled edges removed).
  */
-export function activatePoolsAndGates(graph: Graph): Map<ElementId, Element> {
+export function activatePoolsAndGates(
+    graph: Graph,
+    checkMode: boolean = false
+): Map<ElementId, Element> {
     const disabled: Set<ElementId> = new Set();
     for (const e of graph.elements.values()) {
         switch (e.type) {
             case ElementType.Pool:
-                e._nextTick(graph.variableScope());
+                if (!checkMode) e._nextTick(graph.variableScope());
                 break;
             case ElementType.Gate:
-                e._nextTick();
-                const selected = e._getOutput();
-                const outputs = e._getOutputs().keys();
-                for (const id of outputs) {
-                    if (id !== selected) {
-                        disabled.add(id);
+                if (!checkMode) {
+                    e._nextTick();
+                    const selected = e._getOutput();
+                    const outputs = e._getOutputs().keys();
+                    for (const id of outputs) {
+                        if (id !== selected) {
+                            disabled.add(id);
+                        }
+                    }
+                } else {
+                    for (const [id, weight] of e._getOutputs()) {
+                        if (weight <= 0) {
+                            disabled.add(id);
+                        }
                     }
                 }
                 break;
@@ -231,6 +242,7 @@ function buildGroup(
         cutAtPoolInput,
         cutAtConverterOutput,
         group,
+        isCheckMode,
         visited
     );
     return group;
@@ -242,6 +254,7 @@ function buildGroupInner(
     cutAtPoolInput: boolean,
     cutAtConverterOutput: boolean,
     group: Map<ElementId, Element>,
+    isCheckMode: boolean,
     visited: Set<ElementId>
 ) {
     const element = graphElements.get(currentElement);
@@ -257,7 +270,8 @@ function buildGroupInner(
         graphElements,
         element,
         cutAtPoolInput,
-        cutAtConverterOutput
+        cutAtConverterOutput,
+        isCheckMode
     );
     // recursively add to group
     for (const elementId of neighbors) {
@@ -267,6 +281,7 @@ function buildGroupInner(
             cutAtPoolInput,
             cutAtConverterOutput,
             group,
+            isCheckMode,
             visited
         );
     }
