@@ -202,8 +202,9 @@ function doEdgeWork(
     // recurse if the next element is Gate
     if (toElement?.type === ElementType.Gate) {
         const nextEdge = toElement._getOutput();
-        if (nextEdge !== undefined) {
+        if (nextEdge !== undefined && nextPacket.value > 0) {
             // continue forwarding if edge connected to Gate
+            // and there's something to forward
             doEdgeWork(subgraph, nextEdge, visited, outputs, scope, nextPacket);
         }
     } else {
@@ -211,7 +212,9 @@ function doEdgeWork(
         if (!outputs.has(edge.toNode)) {
             outputs.set(edge.toNode, []);
         }
-        outputs.get(edge.toNode)?.push(nextPacket);
+        if (nextPacket.value > 0) {
+            outputs.get(edge.toNode)!.push(nextPacket);
+        }
     }
 }
 
