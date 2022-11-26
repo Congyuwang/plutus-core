@@ -206,17 +206,26 @@ function doEdgeWork(
 
     // target
     const toElement = subgraph.get(edge.toNode);
-    // recurse if the next element is Gate
-    if (toElement?.type === ElementType.Gate) {
-        const nextEdge = toElement._getOutput();
-        if (nextEdge !== undefined && nextPacket.value > 0) {
-            // continue forwarding if edge connected to Gate
-            // and there's something to forward
-            doEdgeWork(subgraph, nextEdge, visited, outputs, scope, nextPacket);
-        }
-    } else {
-        // write to the output in cases of Pool or Converter
-        if (nextPacket.value > 0) {
+
+    // next step if the packet is not empty
+    if (nextPacket.value > 0) {
+        // recurse if the next element is Gate
+        if (toElement?.type === ElementType.Gate) {
+            const nextEdge = toElement._getOutput();
+            if (nextEdge !== undefined) {
+                // continue forwarding if edge connected to Gate
+                // and there's something to forward
+                doEdgeWork(
+                    subgraph,
+                    nextEdge,
+                    visited,
+                    outputs,
+                    scope,
+                    nextPacket
+                );
+            }
+        } else {
+            // write to the output in cases of Pool or Converter
             if (!outputs.has(edge.toNode)) {
                 outputs.set(edge.toNode, []);
             }
