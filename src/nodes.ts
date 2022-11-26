@@ -503,6 +503,9 @@ class Converter {
                 ratio.push(this.buffer.get(id)! / value);
             }
         }
+        if (ratio.length === 0) {
+            return 0;
+        }
         return min(ratio);
     }
 
