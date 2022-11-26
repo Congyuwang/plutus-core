@@ -209,26 +209,40 @@ class Graph {
     }
 
     /**
-     * Add required element to converter (using Label).
+     * Add required element to converter.
      *
      * The internal remembers the required element using ElementID,
      * which is supposed to remain immutable, whereas the Label
      * might change.
+     * @param converterId the id of the Converter.
+     * @param inputId the id of the input element.
+     *        Must be either `Pool` ot `Converter`.
+     * @param amount the amount required. If (amount <= 0)
+     *        this input requirement is removed.
      */
     public setConverterRequiredInputPerUnit(
-        id: ElementId,
-        label: Label,
+        converterId: ElementId,
+        inputId: ElementId,
         amount: number
     ) {
-        const converter = this.getElement(id);
+        const converter = this.getElement(converterId);
         if (!converter || converter.type !== ElementType.Converter) {
             throw Error("Selected element is not a converter");
         }
-        const requiredId = this.labels.get(label);
-        if (requiredId === undefined) {
-            throw Error(`label '${label}' does not exist`);
+        const requiredElement = this.getElement(inputId);
+        if (
+            requiredElement?.type === ElementType.Gate ||
+            requiredElement?.type === ElementType.Edge
+        ) {
+            throw Error(
+                "Cannot use `Gate` or `Edge` as input. Use `Pool` or `Converter`."
+            );
         }
-        converter._setRequiredInputPerUnit(requiredId, amount);
+        if (amount > 0) {
+            converter._setRequiredInputPerUnit(inputId, amount);
+        } else {
+            converter._deleteInput(inputId);
+        }
     }
 
     /**
