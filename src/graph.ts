@@ -158,7 +158,6 @@ class Graph {
         return newElement;
     }
 
-    // R
     public getElement(id: ElementId): Element | undefined {
         return this.elements.get(id);
     }
