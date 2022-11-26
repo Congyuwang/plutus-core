@@ -328,7 +328,7 @@ class Graph {
                     this.deleteElement(converterOutputEdge);
                 }
                 const converterInputEdges = e._getInputs();
-                converterInputEdges.forEach(edgeId =>
+                Object.keys(converterInputEdges).forEach(edgeId =>
                     this.deleteElement(edgeId)
                 );
                 break;

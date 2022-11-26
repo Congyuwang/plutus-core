@@ -130,7 +130,9 @@ describe("test Converter", () => {
         converter._setInput("3");
         converter._setInput("4");
         converter._deleteInput("2");
-        expect(converter._getInputs()).toEqual(new Set(["1", "3", "4"]));
+        expect(new Set(Object.keys(converter._getInputs()))).toEqual(
+            new Set(["1", "3", "4"])
+        );
         // test output operations
         expect(converter._getOutput()).toBeUndefined();
         converter._setOutput("10");

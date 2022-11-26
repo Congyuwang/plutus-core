@@ -343,7 +343,7 @@ function getNeighborsOf(
         }
         case ElementType.Converter: {
             const inputs = element._getInputs();
-            inputs.forEach(id => neighbors.push(id));
+            Object.keys(inputs).forEach(id => neighbors.push(id));
             const output = element._getOutput();
             if (output && !cutAtConverterOutput) {
                 neighbors.push(output);

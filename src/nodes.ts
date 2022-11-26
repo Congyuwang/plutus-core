@@ -412,7 +412,7 @@ interface Converter {
 class Converter {
     readonly type = ElementType.Converter;
     private label: Label;
-    private readonly fromEdges: Set<ElementId>;
+    private readonly fromEdges: { [key: ElementId]: boolean };
     private toEdge?: ElementId;
     private condition: BooleanFn;
     private readonly requiredInputPerUnit: { [key: ElementId]: number };
@@ -421,13 +421,13 @@ class Converter {
     constructor(arg: Label | Converter) {
         if (typeof arg === "string") {
             this.label = arg;
-            this.fromEdges = new Set();
+            this.fromEdges = {};
             this.condition = new BooleanFn(["true"]);
             this.requiredInputPerUnit = {};
             this.buffer = {};
         } else {
             this.label = arg.label;
-            this.fromEdges = new Set(arg.fromEdges);
+            this.fromEdges = { ...arg.fromEdges };
             this.condition = BooleanFn.fromString(arg.condition.toString());
             this.requiredInputPerUnit = { ...arg.requiredInputPerUnit };
             this.buffer = { ...arg.buffer };
@@ -471,7 +471,7 @@ class Converter {
         this.requiredInputPerUnit[elementId] = value;
     }
 
-    _getInputs(): Set<ElementId> {
+    _getInputs(): { [key: ElementId]: boolean } {
         return this.fromEdges;
     }
 
@@ -485,7 +485,7 @@ class Converter {
     }
 
     _setInput(edgeId: ElementId) {
-        this.fromEdges.add(edgeId);
+        this.fromEdges[edgeId] = true;
     }
 
     _setOutput(edgeId: ElementId) {
@@ -509,7 +509,7 @@ class Converter {
     }
 
     _deleteInput(edgeId: ElementId) {
-        this.fromEdges.delete(edgeId);
+        delete this.fromEdges[edgeId];
     }
 
     _deleteOutput() {
