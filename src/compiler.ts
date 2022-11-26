@@ -220,6 +220,8 @@ export function computeSubGroupOrders(
 
 /**
  * Recursively find all connected neighbors of an element.
+ * (DFS algorithm)
+ *
  * @param graphElements elements of graphs or subgraph.
  * @param startElement the element to start with.
  * @param cutAtPoolInput whether to ignore `Pool.input <-> Edge.toNode`
@@ -248,6 +250,7 @@ function buildGroup(
     return group;
 }
 
+// DFS
 function buildGroupInner(
     graphElements: Map<ElementId, Element>,
     currentElement: ElementId,
