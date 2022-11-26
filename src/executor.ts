@@ -36,7 +36,7 @@ export default function nextTick(graph: Graph) {
  * @param compiledGraph execution order and other info.
  * @param scope for evaluating conditions and functions
  */
-export function executeCompiledGraph(
+function executeCompiledGraph(
     compiledGraph: CompiledGraph,
     scope: VariableScope
 ): Map<ElementId, Packet[]> {
