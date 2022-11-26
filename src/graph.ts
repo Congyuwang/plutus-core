@@ -74,6 +74,7 @@ class Graph {
      * @param edgeId the id of the edge, must be different from existing ids
      * @param fromId from which Node
      * @param toId to which Node
+     * @param rate default to 0, negative means unlimited.
      * @param label (optional) a globally unique label.
      *        If missing, use automatic labelling.
      */
@@ -81,6 +82,7 @@ class Graph {
         edgeId: ElementId,
         fromId: ElementId,
         toId: ElementId,
+        rate: number = 0,
         label?: Label
     ) {
         const from = this.getElement(fromId);
@@ -100,7 +102,7 @@ class Graph {
         this.setNodeOutputToEdge(from, edgeId);
         // to.input = edge
         this.setNodeInputToEdge(to, edgeId);
-        this.elements.set(edgeId, new Edge(labelName, fromId, toId));
+        this.elements.set(edgeId, new Edge(labelName, fromId, toId, rate));
         this.labels.set(labelName, edgeId);
     }
 

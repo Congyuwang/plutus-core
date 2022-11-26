@@ -174,13 +174,17 @@ function doEdgeWork(
     switch (fromElement?.type) {
         case ElementType.Converter: {
             nextPacket.value = fromElement._takeFromState(
-                edge.getRate(),
+                edge.isUnlimited()
+                    ? fromElement.maximumConvertable(scope) // take all
+                    : edge.getRate(),
                 scope
             );
             break;
         }
         case ElementType.Pool: {
-            nextPacket.value = fromElement._takeFromPool(edge.getRate());
+            nextPacket.value = edge.isUnlimited()
+                ? fromElement._takeFromPool(fromElement.getState()) // take all
+                : fromElement._takeFromPool(edge.getRate());
             break;
         }
         case ElementType.Gate: {
@@ -189,7 +193,9 @@ function doEdgeWork(
                 return;
             } else {
                 // forwarding with possible loss
-                nextPacket.value = Math.min(packet.value, edge.getRate());
+                nextPacket.value = edge.isUnlimited()
+                    ? packet.value // lossless take all
+                    : Math.min(packet.value, edge.getRate());
                 nextPacket.from = packet.from;
             }
             break;

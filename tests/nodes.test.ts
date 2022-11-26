@@ -117,9 +117,8 @@ describe("test Edge", () => {
         expect(edge.getRate()).toEqual(0);
         edge.setRate(2);
         expect(edge.getRate()).toEqual(2);
-        expect(() => edge.setRate(-2)).toThrow(
-            Error("cannot have negative rate")
-        );
+        edge.setRate(-2);
+        expect(edge.getRate()).toEqual(-1);
     });
 });
 

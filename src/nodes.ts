@@ -53,11 +53,24 @@ class Edge {
     private label: Label;
     private rate: number;
 
-    constructor(label: Label, fromNode: ElementId, toNode: ElementId) {
+    /**
+     * Edge constructor, not intended for direct use.
+     * Use `Graph.addEdge()` instead.
+     * @param label globally unique edge label
+     * @param fromNode from which Node
+     * @param toNode to which Node
+     * @param rate default to 0, negative means unlimited rate.
+     */
+    constructor(
+        label: Label,
+        fromNode: ElementId,
+        toNode: ElementId,
+        rate: number = 0
+    ) {
         this.label = _checkLabelValidity(label);
         this.fromNode = fromNode;
         this.toNode = toNode;
-        this.rate = 0;
+        this.rate = rate >= 0 ? rate : -1;
     }
 
     getLabel(): Label {
@@ -73,12 +86,17 @@ class Edge {
         this.label = _checkLabelValidity(label);
     }
 
-    // rate must be non-negative, else throw Error
+    /**
+     * Negative value means unlimited rate.
+     * Default value is 0.
+     * @param rate new rate.
+     */
     setRate(rate: number) {
-        if (rate < 0) {
-            throw Error("cannot have negative rate");
-        }
-        this.rate = rate;
+        this.rate = rate >= 0 ? rate : -1;
+    }
+
+    isUnlimited(): boolean {
+        return this.rate < 0;
     }
 }
 
