@@ -146,13 +146,13 @@ function executeSubgroup(
     // and prevent potential infinite loop.
     const visited: Set<ElementId> = new Set();
     for (const edgeId of entryPoints) {
-        doEdgeWork(subgraph, edgeId, visited, output, scope);
+        runEdge(subgraph, edgeId, visited, output, scope);
     }
     return output;
 }
 
 // all output are cached in outputs Map and not written to Graph
-function doEdgeWork(
+function runEdge(
     subgraph: Map<ElementId, Element>,
     edgeId: ElementId,
     visited: Set<ElementId>,
@@ -215,7 +215,7 @@ function doEdgeWork(
             if (nextEdge !== undefined) {
                 // continue forwarding if edge connected to Gate
                 // and there's something to forward
-                doEdgeWork(
+                runEdge(
                     subgraph,
                     nextEdge,
                     visited,
