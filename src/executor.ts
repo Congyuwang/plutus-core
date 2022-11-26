@@ -80,8 +80,8 @@ function executeOrderedSubgroup(
         const converter = converterId ? subgraph.get(converterId) : undefined;
         for (const [id, packets] of outputs.entries()) {
             if (
-                !!converter &&
-                !!converterId &&
+                converter !== undefined &&
+                converterId !== undefined &&
                 id === converterId &&
                 converter.type === ElementType.Converter
             ) {
