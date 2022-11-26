@@ -216,10 +216,10 @@ function doEdgeWork(
         }
     } else {
         // write to the output in cases of Pool or Converter
-        if (!outputs.has(edge.toNode)) {
-            outputs.set(edge.toNode, []);
-        }
         if (nextPacket.value > 0) {
+            if (!outputs.has(edge.toNode)) {
+                outputs.set(edge.toNode, []);
+            }
             outputs.get(edge.toNode)!.push(nextPacket);
         }
     }
