@@ -1,3 +1,7 @@
+/**
+ * For the details of the testing graphs,
+ * open file `../plutus-test-graph.drawio.xml` in `https://app.diagrams.net`
+ */
 import { Gate, Graph, NodeType } from "../src";
 
 export function testCase1(): Graph {

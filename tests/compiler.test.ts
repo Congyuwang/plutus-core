@@ -1,3 +1,7 @@
+/**
+ * For the details of the testing graphs,
+ * open `../plutus-test-graph.drawio.xml` in `https://app.diagrams.net`
+ */
 import { Gate, Graph } from "../src";
 import {
     addCyclicConverter,
