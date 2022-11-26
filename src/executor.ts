@@ -36,8 +36,8 @@ export default function nextTick(graph: Graph) {
 function executeCompiledGraph(
     graph: Graph,
     compiledGraph: CompiledGraph
-): Map<ElementId, Packet[]> {
-    let allOutputs: Map<ElementId, Packet[]> = new Map();
+): { [key: ElementId]: Packet[] } {
+    let allOutputs: { [key: ElementId]: Packet[] } = {};
     for (const group of compiledGraph) {
         switch (group.type) {
             case ConverterGroupTypes.Cyclic: {
@@ -66,17 +66,17 @@ function executeCompiledGraph(
 function executeOrderedSubgroup(
     graph: Graph,
     orderedSubgroups: OrderedConverterGroups
-): Map<ElementId, Packet[]> {
-    let allOutputs: Map<ElementId, Packet[]> = new Map();
+): { [key: ElementId]: Packet[] } {
+    let allOutputs: { [key: ElementId]: Packet[] } = {};
     for (const i of orderedSubgroups.groupExecutionOrder) {
         const subgraph = orderedSubgroups.groups[i];
-        const entryPoints = orderedSubgroups.entryPointsToGroup.get(i);
+        const entryPoints = orderedSubgroups.entryPointsToGroup[i];
         const outputs = executeSubgroup(graph, entryPoints);
 
-        const converterId = orderedSubgroups.converterOfGroup.get(i);
+        const converterId = orderedSubgroups.converterOfGroup[i];
         const converter =
-            converterId !== undefined ? subgraph.get(converterId) : undefined;
-        for (const [id, packets] of outputs.entries()) {
+            converterId !== undefined ? subgraph[converterId] : undefined;
+        for (const [id, packets] of Object.entries(outputs)) {
             if (
                 converter !== undefined &&
                 converterId !== undefined &&
@@ -84,7 +84,7 @@ function executeOrderedSubgroup(
                 converter.type === ElementType.Converter
             ) {
                 // write to converter if this subgroup has a converter
-                const converterOutput = outputs.get(converterId);
+                const converterOutput = outputs[converterId];
                 if (converterOutput !== undefined) {
                     for (const packet of converterOutput) {
                         converter._addToBuffer(packet.from, packet.value);
@@ -92,10 +92,10 @@ function executeOrderedSubgroup(
                 }
             } else {
                 // Otherwise, aggregate outputs
-                if (!allOutputs.has(id)) {
-                    allOutputs.set(id, []);
+                if (!(id in allOutputs)) {
+                    allOutputs[id] = [];
                 }
-                allOutputs.get(id)!.push(...packets);
+                allOutputs[id]!.push(...packets);
             }
         }
     }
@@ -114,9 +114,11 @@ function executeOrderedSubgroup(
 function executeCyclicSubgroup(
     graph: Graph,
     cyclicSubgroup: CyclicConverterGroups
-): Map<ElementId, Packet[]> {
-    let allOutputs: Map<ElementId, Packet[]> = new Map();
-    for (const entryPoints of cyclicSubgroup.entryPointsToGroup.values()) {
+): { [key: ElementId]: Packet[] } {
+    let allOutputs: { [key: ElementId]: Packet[] } = {};
+    for (const entryPoints of Object.values(
+        cyclicSubgroup.entryPointsToGroup
+    )) {
         const outputs = executeSubgroup(graph, entryPoints);
         mergeOutputs(allOutputs, outputs);
     }
@@ -130,8 +132,8 @@ function executeCyclicSubgroup(
 function executeSubgroup(
     graph: Graph,
     entryPoints: Set<ElementId> | undefined
-): Map<ElementId, Packet[]> {
-    const output: Map<ElementId, Packet[]> = new Map();
+): { [key: ElementId]: Packet[] } {
+    const output: { [key: ElementId]: Packet[] } = {};
     if (entryPoints === undefined || entryPoints.size === 0) {
         // dead group (i.e. group with no input from Converter or Pool.)
         return output;
@@ -151,7 +153,7 @@ function runEdge(
     graph: Graph,
     edgeId: ElementId,
     visited: Set<ElementId>,
-    outputs: Map<ElementId, Packet[]>,
+    outputs: { [key: ElementId]: Packet[] },
     packet?: Packet
 ) {
     if (visited.has(edgeId)) return;
@@ -213,10 +215,10 @@ function runEdge(
             }
         } else {
             // write to the output in cases of Pool or Converter
-            if (!outputs.has(edge.toNode)) {
-                outputs.set(edge.toNode, []);
+            if (!(edge.toNode in outputs)) {
+                outputs[edge.toNode] = [];
             }
-            outputs.get(edge.toNode)!.push(nextPacket);
+            outputs[edge.toNode]!.push(nextPacket);
         }
     }
 }
@@ -228,9 +230,9 @@ function runEdge(
  */
 export function writeToGraph(
     graph: Graph,
-    allOutputs: Map<ElementId, Packet[]>
+    allOutputs: { [key: ElementId]: Packet[] }
 ) {
-    for (const [id, packets] of allOutputs) {
+    for (const [id, packets] of Object.entries(allOutputs)) {
         const e = graph.getElement(id);
         switch (e?.type) {
             case ElementType.Pool:
@@ -247,13 +249,13 @@ export function writeToGraph(
 }
 
 export function mergeOutputs(
-    to: Map<ElementId, Packet[]>,
-    from: Map<ElementId, Packet[]>
+    to: { [key: ElementId]: Packet[] },
+    from: { [key: ElementId]: Packet[] }
 ) {
-    for (const [id, packets] of from.entries()) {
-        if (!to.has(id)) {
-            to.set(id, []);
+    for (const [id, packets] of Object.entries(from)) {
+        if (!(id in to)) {
+            to[id] = [];
         }
-        to.get(id)!.push(...packets);
+        to[id]!.push(...packets);
     }
 }

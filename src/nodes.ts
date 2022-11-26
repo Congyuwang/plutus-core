@@ -290,10 +290,10 @@ class Gate {
     private label: Label;
     private fromEdge?: ElementId;
     private selectedToEdge?: ElementId;
-    private readonly toEdges: Map<ElementId, Weight>;
+    private readonly toEdges: { [key: ElementId]: Weight };
 
     constructor(label: Label) {
-        this.toEdges = new Map();
+        this.toEdges = {};
         this.label = _checkLabelValidity(label);
     }
 
@@ -315,7 +315,7 @@ class Gate {
     /**
      * Get all output and their weights
      */
-    _getOutputs(): Map<ElementId, Weight> {
+    _getOutputs(): { [key: ElementId]: Weight } {
         return this.toEdges;
     }
 
@@ -336,7 +336,7 @@ class Gate {
         if (weight < 0) {
             throw Error("output weight must be >= 0");
         }
-        this.toEdges.set(edgeId, weight);
+        this.toEdges[edgeId] = weight;
     }
 
     _deleteInput() {
@@ -344,7 +344,7 @@ class Gate {
     }
 
     _deleteOutput(id: ElementId) {
-        this.toEdges.delete(id);
+        delete this.toEdges[id];
     }
 
     /**
@@ -357,8 +357,8 @@ class Gate {
 
     // return undefined if no outputs defined
     _randomSelect(): ElementId | undefined {
-        const weights = [...this.toEdges.values()];
-        if (weights.length === 0 || sum(weights) === 0) {
+        const weights = [...Object.values(this.toEdges)];
+        if (this.toEdges.length === 0 || sum(weights) === 0) {
             return undefined;
         }
         let i;
@@ -371,7 +371,7 @@ class Gate {
                 break;
             }
         }
-        return [...this.toEdges.keys()][i];
+        return [...Object.keys(this.toEdges)][i];
     }
 }
 
@@ -386,15 +386,15 @@ class Converter {
     private readonly fromEdges: Set<ElementId>;
     private toEdge?: ElementId;
     private condition: BooleanFn;
-    private readonly requiredInputPerUnit: Map<ElementId, number>;
-    private readonly buffer: Map<ElementId, number>;
+    private readonly requiredInputPerUnit: { [key: ElementId]: number };
+    private readonly buffer: { [key: ElementId]: number };
 
     constructor(label: Label) {
         this.label = label;
         this.fromEdges = new Set();
         this.condition = new BooleanFn(["true"]);
-        this.requiredInputPerUnit = new Map();
-        this.buffer = new Map();
+        this.requiredInputPerUnit = {};
+        this.buffer = {};
     }
 
     // add new input element from edges
@@ -402,23 +402,23 @@ class Converter {
         if (amount < 0) {
             throw Error("must add non-negative amount to element buffer");
         }
-        const currentAmount = this.buffer.get(elementId) || 0;
-        this.buffer.set(elementId, currentAmount + amount);
+        const currentAmount = this.buffer[elementId] || 0;
+        this.buffer[elementId] = currentAmount + amount;
     }
 
     getLabel(): Label {
         return this.label;
     }
 
-    _getRequiredInputPerUnit(): Map<ElementId, number> {
+    _getRequiredInputPerUnit(): { [key: ElementId]: number } {
         return this.requiredInputPerUnit;
     }
 
     /**
      * Return a copy of the converter buffer.
      */
-    getBuffer(): Map<ElementId, number> {
-        return new Map(this.buffer);
+    getBuffer(): { [key: ElementId]: number } {
+        return { ...this.buffer };
     }
 
     /**
@@ -431,7 +431,7 @@ class Converter {
         if (value <= 0) {
             throw Error("must have positive element value requirement");
         }
-        this.requiredInputPerUnit.set(elementId, value);
+        this.requiredInputPerUnit[elementId] = value;
     }
 
     _getInputs(): Set<ElementId> {
@@ -468,7 +468,7 @@ class Converter {
     }
 
     deleteRequiredInputPerUnit(elementId: ElementId) {
-        this.requiredInputPerUnit.delete(elementId);
+        delete this.requiredInputPerUnit[elementId];
     }
 
     _deleteInput(edgeId: ElementId) {
@@ -494,13 +494,13 @@ class Converter {
 
         // compute units produced
         const ratio = [] as number[];
-        for (const [id, value] of this.requiredInputPerUnit.entries()) {
-            if (!this.buffer.has(id)) {
+        for (const [id, value] of Object.entries(this.requiredInputPerUnit)) {
+            if (!(id in this.buffer)) {
                 // lack material
                 return 0;
             }
             if (value > 0) {
-                ratio.push(this.buffer.get(id)! / value);
+                ratio.push(this.buffer[id]! / value);
             }
         }
         if (ratio.length === 0) {
@@ -511,9 +511,9 @@ class Converter {
 
     private consumeBuffer(unitsProduced: number) {
         if (unitsProduced <= 0) return;
-        for (const [id, value] of this.requiredInputPerUnit.entries()) {
+        for (const [id, value] of Object.entries(this.requiredInputPerUnit)) {
             const inputConsumed = value * unitsProduced;
-            this.buffer.set(id, this.buffer.get(id)! - inputConsumed);
+            this.buffer[id] = this.buffer[id]! - inputConsumed;
         }
     }
 }

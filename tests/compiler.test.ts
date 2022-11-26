@@ -23,23 +23,23 @@ import {
 describe("test compiler module", () => {
     test("test activatePoolsAndGate (1)", () => {
         const graph = testCase1();
-        expect(graph.elements.size).toEqual(31);
+        expect(Object.keys(graph.elements).length).toEqual(31);
         const elements = activatePoolsAndGates(graph);
-        expect(elements.size).toEqual(28);
+        expect(Object.keys(elements).length).toEqual(28);
     });
 
     test("test activatePoolsAndGate (2)", () => {
         const graph = testCase2();
-        expect(graph.elements.size).toEqual(31);
+        expect(Object.keys(graph.elements).length).toEqual(31);
         const elements = activatePoolsAndGates(graph);
-        expect(elements.size).toEqual(28);
+        expect(Object.keys(elements).length).toEqual(28);
     });
 
     test("test cutByPoolInput (1)", () => {
         const graph = testCase1();
         const elements = activatePoolsAndGates(graph);
         const poolGroups = cutAtPoolInput(elements);
-        const poolGroupKeys = poolGroups.map(g => new Set(g.keys()));
+        const poolGroupKeys = poolGroups.map(g => new Set(Object.keys(g)));
         expect(poolGroupKeys.length).toEqual(3);
         expect(poolGroupKeys).toContainEqual(
             new Set(["g0", "g1", "g0-g1", "g1-g0"])
@@ -82,7 +82,7 @@ describe("test compiler module", () => {
         const graph = testCase2();
         const elements = activatePoolsAndGates(graph);
         const poolGroups = cutAtPoolInput(elements);
-        const poolGroupKeys = poolGroups.map(g => new Set(g.keys()));
+        const poolGroupKeys = poolGroups.map(g => new Set(Object.keys(g)));
         expect(poolGroupKeys).toContainEqual(
             new Set(["g0", "g1", "g0-g1", "g1-g0"])
         );
@@ -123,7 +123,7 @@ describe("test compiler module", () => {
         const poolGroups = cutAtPoolInput(elements);
         const subgroupsKeys = poolGroups
             .flatMap(g => cutAtConverterInput(g, false))
-            .map(g => new Set(g.keys()));
+            .map(g => new Set(Object.keys(g)));
         expect(subgroupsKeys.length).toEqual(8);
         expect(subgroupsKeys).toContainEqual(
             new Set(["g0", "g1-g0", "g1", "g0-g1"])
@@ -149,7 +149,7 @@ describe("test compiler module", () => {
         const poolGroups = cutAtPoolInput(elements);
         const subgroupsKeys = poolGroups
             .flatMap(g => cutAtConverterInput(g, false))
-            .map(g => new Set(g.keys()));
+            .map(g => new Set(Object.keys(g)));
         expect(subgroupsKeys.length).toEqual(8);
         expect(subgroupsKeys).toContainEqual(new Set(["p0", "p0-c0", "c0"]));
         expect(subgroupsKeys).toContainEqual(new Set(["c0-g2", "g2", "g2-p2"]));
@@ -187,17 +187,17 @@ describe("test compiler module", () => {
         expect(group1?.type).toEqual(ConverterGroupTypes.Ordered);
         expect(group2?.type).toEqual(ConverterGroupTypes.Ordered);
         // entry points
-        expect(new Set([...group0!.entryPointsToGroup.values()])).toEqual(
+        expect(new Set(Object.values(group0!.entryPointsToGroup))).toEqual(
             new Set([new Set()])
         );
-        expect(new Set([...group1!.entryPointsToGroup.values()])).toEqual(
+        expect(new Set(Object.values(group1!.entryPointsToGroup))).toEqual(
             new Set([
                 new Set(["c4-c3", "p4-c3"]),
                 new Set(["c3-g3"]),
                 new Set([]),
             ])
         );
-        expect(new Set([...group2!.entryPointsToGroup.values()])).toEqual(
+        expect(new Set(Object.values(group2!.entryPointsToGroup))).toEqual(
             new Set([
                 new Set(["p1-c2", "p2-c2"]),
                 new Set(["p3-c1", "c0-g2", "c2-c1"]),
@@ -209,19 +209,19 @@ describe("test compiler module", () => {
             const groups = group1.groupExecutionOrder.map(
                 o => group1.groups[o]
             );
-            expect(groups.findIndex(g => g.has("c4"))).toBeLessThan(
-                groups.findIndex(g => g.has("c3"))
+            expect(groups.findIndex(g => "c4" in g)).toBeLessThan(
+                groups.findIndex(g => "c3" in g)
             );
         }
         if (group2?.type === ConverterGroupTypes.Ordered) {
             const groups = group2.groupExecutionOrder.map(
                 o => group2.groups[o]
             );
-            expect(groups.findIndex(g => g.has("c0"))).toBeLessThan(
-                groups.findIndex(g => g.has("g2"))
+            expect(groups.findIndex(g => "c0" in g)).toBeLessThan(
+                groups.findIndex(g => "g2" in g)
             );
-            expect(groups.findIndex(g => g.has("c2"))).toBeLessThan(
-                groups.findIndex(g => g.has("c1"))
+            expect(groups.findIndex(g => "c2" in g)).toBeLessThan(
+                groups.findIndex(g => "c1" in g)
             );
         }
     });
@@ -247,36 +247,36 @@ describe("test compiler module", () => {
         expect(group2?.type).toEqual(ConverterGroupTypes.Ordered);
         expect(group3?.type).toEqual(ConverterGroupTypes.Cyclic);
         // entry points
-        expect(new Set([...group0!.entryPointsToGroup.values()])).toEqual(
+        expect(new Set(Object.values(group0!.entryPointsToGroup))).toEqual(
             new Set([new Set()])
         );
-        expect(new Set([...group1!.entryPointsToGroup.values()])).toEqual(
+        expect(new Set(Object.values(group1!.entryPointsToGroup))).toEqual(
             new Set([new Set(["p0-c0"]), new Set(["c0-g2"])])
         );
-        expect(new Set([...group2!.entryPointsToGroup.values()])).toEqual(
+        expect(new Set(Object.values(group2!.entryPointsToGroup))).toEqual(
             new Set([
                 new Set(["p2-c2", "p1-c2"]),
                 new Set(["c2-c1", "p3-c1"]),
                 new Set(["c1-p0"]),
             ])
         );
-        expect(new Set([...group3!.entryPointsToGroup.values()])).toEqual(
+        expect(new Set(Object.values(group3!.entryPointsToGroup))).toEqual(
             new Set([new Set(["c4-c3", "p4-c3"]), new Set(["c3-g3"])])
         );
         if (group1?.type === ConverterGroupTypes.Ordered) {
             const groups = group1.groupExecutionOrder.map(
                 o => group1.groups[o]
             );
-            expect(groups.findIndex(g => g.has("c0"))).toBeLessThan(
-                groups.findIndex(g => g.has("g2"))
+            expect(groups.findIndex(g => "c0" in g)).toBeLessThan(
+                groups.findIndex(g => "g2" in g)
             );
         }
         if (group2?.type === ConverterGroupTypes.Ordered) {
             const groups = group2.groupExecutionOrder.map(
                 o => group2.groups[o]
             );
-            expect(groups.findIndex(g => g.has("c2"))).toBeLessThan(
-                groups.findIndex(g => g.has("c1"))
+            expect(groups.findIndex(g => "c2" in g)).toBeLessThan(
+                groups.findIndex(g => "c1" in g)
             );
         }
     });

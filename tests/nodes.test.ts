@@ -73,16 +73,16 @@ describe("test Gate", () => {
 
     test("test Gate distribution", () => {
         const gate = new Gate("gate0");
-        const weightMap = new Map([
-            ["1", 1],
-            ["2", 2.5],
-            ["3", 1],
-            ["4", 0.3],
-            ["5", 0.7],
-        ]);
+        const weightMap = {
+            "1": 1,
+            "2": 2.5,
+            "3": 1,
+            "4": 0.3,
+            "5": 0.7,
+        };
 
         // test _setOutput, _deleteOutput
-        for (const [id, weight] of weightMap) {
+        for (const [id, weight] of Object.entries(weightMap)) {
             gate._setOutput(id, weight);
         }
         gate._setOutput("6", 10);
@@ -93,20 +93,20 @@ describe("test Gate", () => {
         );
 
         // test distributions p-value of Chi-Squared > 0.05
-        const stats = new Map();
-        for (const k of weightMap.keys()) {
-            stats.set(k, 0);
+        const stats: { [key: string]: number } = {};
+        for (const k of Object.keys(weightMap)) {
+            stats[k] = 0;
         }
         const ROUND = 100000;
-        const sumOfWeights = sum(...weightMap.values());
-        const expected = [...weightMap.values()].map(
+        const sumOfWeights = sum(Object.values(weightMap));
+        const expected = Object.values(weightMap).map(
             w => (w * ROUND) / sumOfWeights
         );
         for (let i = 0; i < ROUND; i++) {
             const selected = gate._randomSelect();
-            stats.set(selected, stats.get(selected) + 1);
+            stats[selected!] = stats[selected!] + 1;
         }
-        const { pValue } = gof([...stats.values()], expected);
+        const { pValue } = gof([...Object.values(stats)], expected);
         expect(pValue).toBeGreaterThan(0.05);
     });
 });
@@ -146,34 +146,28 @@ describe("test Converter", () => {
         converter._setRequiredInputPerUnit("003", 8);
         converter._setRequiredInputPerUnit("004", 16);
         converter.deleteRequiredInputPerUnit("002");
-        expect(converter._getRequiredInputPerUnit()).toEqual(
-            new Map([
-                ["001", 2],
-                ["003", 8],
-                ["004", 16],
-            ])
-        );
+        expect(converter._getRequiredInputPerUnit()).toEqual({
+            "001": 2,
+            "003": 8,
+            "004": 16,
+        });
         converter._addToBuffer("001", 14);
         converter._addToBuffer("003", 4);
         expect(converter.maximumConvertable(MapScope.fromObj({}))).toEqual(0);
         converter._addToBuffer("004", 100);
         expect(converter._takeFromState(10, MapScope.fromObj({}))).toEqual(0.5);
-        expect(converter.getBuffer()).toEqual(
-            new Map([
-                ["001", 13],
-                ["003", 0],
-                ["004", 92],
-            ])
-        );
+        expect(converter.getBuffer()).toEqual({
+            "001": 13,
+            "003": 0,
+            "004": 92,
+        });
         converter._addToBuffer("003", 16);
         expect(converter.maximumConvertable(MapScope.fromObj({}))).toEqual(2);
         expect(converter._takeFromState(1, MapScope.fromObj({}))).toEqual(1);
-        expect(converter.getBuffer()).toEqual(
-            new Map([
-                ["001", 11],
-                ["003", 8],
-                ["004", 76],
-            ])
-        );
+        expect(converter.getBuffer()).toEqual({
+            "001": 11,
+            "003": 8,
+            "004": 76,
+        });
     });
 });

@@ -35,9 +35,9 @@ export type GraphCheckWarningResult = {
 
 class Graph {
     // Mapping from globally unique ID to Edge | Node.
-    elements: Map<ElementId, Element>;
+    elements: { [key: ElementId]: Element };
     // Mapping from globally unique labels to unique ID.
-    labels: Map<Label, ElementId>;
+    labels: { [key: Label]: ElementId };
     // A counter for implementing automatic labelling.
     autoLabelCounter: {
         pool: number;
@@ -47,8 +47,8 @@ class Graph {
     };
 
     constructor() {
-        this.elements = new Map();
-        this.labels = new Map();
+        this.elements = {};
+        this.labels = {};
         this.autoLabelCounter = {
             converter: 0,
             edge: 0,
@@ -92,7 +92,7 @@ class Graph {
         if (!from || !to) {
             throw Error("connecting Node with non-existing id");
         }
-        if (this.elements.has(edgeId)) {
+        if (edgeId in this.elements) {
             throw Error("edge id already exists");
         }
         if (fromId === toId) {
@@ -102,8 +102,8 @@ class Graph {
         this.setNodeOutputToEdge(from, edgeId);
         // to.input = edge
         this.setNodeInputToEdge(to, edgeId);
-        this.elements.set(edgeId, new Edge(labelName, fromId, toId, rate));
-        this.labels.set(labelName, edgeId);
+        this.elements[edgeId] = new Edge(labelName, fromId, toId, rate);
+        this.labels[labelName] = edgeId;
     }
 
     /**
@@ -115,14 +115,14 @@ class Graph {
      * @param id
      */
     public addNodeObject(node: Node, id: ElementId) {
-        if (this.elements.has(id)) {
+        if (id in this.elements) {
             throw Error("id already exists");
         }
-        if (this.labels.has(node.getLabel())) {
+        if (node.getLabel() in this.labels) {
             throw Error("duplicate label");
         }
-        this.elements.set(id, node);
-        this.labels.set(node.getLabel(), id);
+        this.elements[id] = node;
+        this.labels[node.getLabel()] = id;
     }
 
     /**
@@ -133,12 +133,12 @@ class Graph {
      *        If missing, use automatic labelling.
      */
     public addNode(type: NodeType, id: ElementId, label?: Label): Node {
-        if (this.elements.has(id)) {
+        if (id in this.elements) {
             throw Error("id already exists");
         }
         const labelName =
             label !== undefined ? label : this.autoLabelNode(type);
-        if (this.labels.has(labelName)) {
+        if (labelName in this.labels) {
             throw Error("duplicate label");
         }
         let newElement;
@@ -153,17 +153,17 @@ class Graph {
                 newElement = new Converter(labelName);
                 break;
         }
-        this.elements.set(id, newElement);
-        this.labels.set(labelName, id);
+        this.elements[id] = newElement;
+        this.labels[labelName] = id;
         return newElement;
     }
 
     public getElement(id: ElementId): Element | undefined {
-        return this.elements.get(id);
+        return this.elements[id];
     }
 
     public getElementByLabel(label: Label): Element | undefined {
-        const id = this.labels.get(label);
+        const id = this.labels[label];
         if (id === undefined) return undefined;
         return this.getElement(id);
     }
@@ -193,17 +193,17 @@ class Graph {
      */
     public setLabel(id: ElementId, label: Label): Element {
         // check that id exists
-        const e = this.elements.get(id);
+        const e = this.elements[id];
         if (e === undefined) {
             throw new Error("id not found");
         }
         // check that new label is not duplicated
-        if (this.labels.has(label)) {
+        if (label in this.labels) {
             throw new Error(`label '${label}' already exists`);
         }
-        this.labels.delete(e.getLabel());
+        delete this.labels[e.getLabel()];
         e._setLabel(label);
-        this.labels.set(label, id);
+        this.labels[label] = id;
         return e;
     }
 
@@ -269,7 +269,7 @@ class Graph {
         if (edge?.type !== ElementType.Edge) {
             throw Error("the output element must be specified as an edge");
         }
-        if (!gate._getOutputs().has(edgeId)) {
+        if (!(edgeId in gate._getOutputs())) {
             throw Error("the output edge is not connected to this gate");
         }
         gate._setOutput(edgeId, Math.max(0, weight));
@@ -297,7 +297,7 @@ class Graph {
      * @param id
      */
     public deleteElement(id: ElementId) {
-        const e = this.elements.get(id);
+        const e = this.elements[id];
         if (e === undefined) return;
         switch (e.type) {
             case ElementType.Pool:
@@ -325,7 +325,7 @@ class Graph {
                 if (gateInputEdge !== undefined) {
                     this.deleteElement(gateInputEdge);
                 }
-                const gateOutputEdges = e._getOutputs().keys();
+                const gateOutputEdges = Object.keys(e._getOutputs());
                 for (const edgeId of gateOutputEdges) {
                     this.deleteElement(edgeId);
                 }
@@ -337,8 +337,8 @@ class Graph {
                 if (to !== undefined) Graph.deleteNodeInput(to, id);
                 break;
         }
-        this.elements.delete(id);
-        this.labels.delete(e.getLabel());
+        delete this.elements[id];
+        delete this.labels[e.getLabel()];
     }
 
     /**
@@ -364,7 +364,9 @@ class Graph {
         const cyclicConverters: Set<ElementId>[] = [];
         compiledGraph.forEach(g => {
             if (g.type === ConverterGroupTypes.Cyclic) {
-                cyclicConverters.push(new Set(g.converterOfGroup.values()));
+                cyclicConverters.push(
+                    new Set(Object.values(g.converterOfGroup))
+                );
             }
         });
         if (cyclicConverters.length > 0) {
@@ -491,22 +493,22 @@ class Graph {
  * All writings write to `GraphVariableScope.localCache`.
  */
 class GraphVariableScope implements VariableScope {
-    private graph;
-    private localCache: Map<Label, any>;
+    private readonly graph;
+    private readonly localCache: { [key: Label]: any };
 
     constructor(graph: Graph) {
         this.graph = graph;
-        this.localCache = new Map();
+        this.localCache = {};
     }
 
     get(label: Label): any {
-        const checkLocal = this.localCache.get(label);
+        const checkLocal = this.localCache[label];
         if (checkLocal !== undefined) {
             return checkLocal;
         }
         const fromGraph = this.graph.getStateByLabel(label);
         if (fromGraph !== undefined) {
-            this.localCache.set(label, fromGraph);
+            this.localCache[label] = fromGraph;
         }
         return fromGraph;
     }
@@ -517,8 +519,8 @@ class GraphVariableScope implements VariableScope {
     }
 
     keys(): Iterator<Label> {
-        const vars = new Set(this.localCache.keys());
-        for (const label of this.graph.labels.keys()) {
+        const vars = new Set(Object.keys(this.localCache));
+        for (const label of Object.keys(this.graph.labels)) {
             if (this.has(label)) {
                 vars.add(label);
             }
@@ -527,7 +529,7 @@ class GraphVariableScope implements VariableScope {
     }
 
     set(label: Label, value: any): void {
-        this.localCache.set(label, value);
+        this.localCache[label] = value;
     }
 }
 

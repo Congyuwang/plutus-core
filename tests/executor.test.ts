@@ -1,6 +1,13 @@
 import { mergeOutputs, Packet } from "../src/executor";
-import { Converter, ElementId, Graph, NodeType, Pool } from "../src";
-import { smallGraph } from "./testGraph";
+import {
+    Converter,
+    ElementId,
+    ElementType,
+    Graph,
+    NodeType,
+    Pool,
+} from "../src";
+import { smallGraph, testCase2 } from "./testGraph";
 
 describe("test simple cases", () => {
     test("test two pools with a gate", () => {
@@ -115,46 +122,36 @@ describe("test simple cases", () => {
         graph.nextTick();
         expect((<Pool>graph.getElement("p0")).getState()).toEqual(4);
         expect((<Pool>graph.getElement("p1")).getState()).toEqual(8);
-        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual(
-            new Map([
-                ["p0", 2],
-                ["p1", 3],
-            ])
-        );
+        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual({
+            p0: 2,
+            p1: 3,
+        });
         graph.nextTick();
         expect((<Pool>graph.getElement("p0")).getState()).toEqual(0);
         expect((<Pool>graph.getElement("p1")).getState()).toEqual(4);
-        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual(
-            new Map([
-                ["p0", 4],
-                ["p1", 6],
-            ])
-        );
+        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual({
+            p0: 4,
+            p1: 6,
+        });
         graph.nextTick();
         expect((<Pool>graph.getElement("p0")).getState()).toEqual(0);
         expect((<Pool>graph.getElement("p1")).getState()).toEqual(0);
-        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual(
-            new Map([
-                ["p0", 2],
-                ["p1", 9],
-            ])
-        );
+        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual({
+            p0: 2,
+            p1: 9,
+        });
         graph.nextTick();
         expect((<Pool>graph.getElement("p0")).getState()).toEqual(0);
         expect((<Pool>graph.getElement("p1")).getState()).toEqual(0);
-        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual(
-            new Map([
-                ["p0", 0],
-                ["p1", 8],
-            ])
-        );
+        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual({
+            p0: 0,
+            p1: 8,
+        });
         graph.nextTick();
-        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual(
-            new Map([
-                ["p0", 0],
-                ["p1", 8],
-            ])
-        );
+        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual({
+            p0: 0,
+            p1: 8,
+        });
     });
 
     test("pools with gates and converter (case 1)", () => {
@@ -166,117 +163,92 @@ describe("test simple cases", () => {
         graph.nextTick();
         expect((<Pool>graph.getElement("p1")).getState()).toEqual(8);
         expect((<Pool>graph.getElement("p0")).getState()).toEqual(5);
-        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual(
-            new Map([
-                ["p0", 2],
-                ["p1", 3],
-            ])
-        );
+        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual({
+            p0: 2,
+            p1: 3,
+        });
         graph.nextTick();
         expect((<Pool>graph.getElement("p1")).getState()).toEqual(4);
         expect((<Pool>graph.getElement("p0")).getState()).toEqual(2);
-        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual(
-            new Map([
-                ["p0", 4],
-                ["p1", 6],
-            ])
-        );
+        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual({
+            p0: 4,
+            p1: 6,
+        });
         graph.nextTick();
         expect((<Pool>graph.getElement("p0")).getState()).toEqual(1);
         expect((<Pool>graph.getElement("p1")).getState()).toEqual(0);
-        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual(
-            new Map([
-                ["p0", 4],
-                ["p1", 9],
-            ])
-        );
+        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual({
+            p0: 4,
+            p1: 9,
+        });
         graph.nextTick();
         expect((<Pool>graph.getElement("p0")).getState()).toEqual(1);
         expect((<Pool>graph.getElement("p1")).getState()).toEqual(0);
-        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual(
-            new Map([
-                ["p0", 3],
-                ["p1", 8],
-            ])
-        );
+        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual({
+            p0: 3,
+            p1: 8,
+        });
         graph.nextTick();
         expect((<Pool>graph.getElement("p0")).getState()).toEqual(1);
         expect((<Pool>graph.getElement("p1")).getState()).toEqual(0);
-        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual(
-            new Map([
-                ["p0", 2],
-                ["p1", 7],
-            ])
-        );
+        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual({
+            p0: 2,
+            p1: 7,
+        });
         graph.nextTick();
         expect((<Pool>graph.getElement("p0")).getState()).toEqual(1);
         expect((<Pool>graph.getElement("p1")).getState()).toEqual(0);
-        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual(
-            new Map([
-                ["p0", 1],
-                ["p1", 6],
-            ])
-        );
+        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual({
+            p0: 1,
+            p1: 6,
+        });
         graph.nextTick();
         expect((<Pool>graph.getElement("p0")).getState()).toEqual(1);
         expect((<Pool>graph.getElement("p1")).getState()).toEqual(0);
-        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual(
-            new Map([
-                ["p0", 0],
-                ["p1", 5],
-            ])
-        );
+        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual({
+            p0: 0,
+            p1: 5,
+        });
         graph.nextTick();
         expect((<Pool>graph.getElement("p0")).getState()).toEqual(0.5);
         expect((<Pool>graph.getElement("p1")).getState()).toEqual(0);
-        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual(
-            new Map([
-                ["p0", 0],
-                ["p1", 4.5],
-            ])
-        );
+        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual({
+            p0: 0,
+            p1: 4.5,
+        });
         graph.nextTick();
         expect((<Pool>graph.getElement("p0")).getState()).toEqual(0.25);
         expect((<Pool>graph.getElement("p1")).getState()).toEqual(0);
-        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual(
-            new Map([
-                ["p0", 0],
-                ["p1", 4.25],
-            ])
-        );
+        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual({
+            p0: 0,
+            p1: 4.25,
+        });
     });
 });
 
 describe("test executor utility functions", () => {
     test("test output merger", () => {
-        const allOutputs: Map<ElementId, Packet[]> = new Map([
-            [
-                "converter$0",
-                [
-                    { from: "pool$0", value: 1 },
-                    { from: "converter$1", value: 2 },
-                ],
+        const allOutputs: { [key: ElementId]: Packet[] } = {
+            converter$0: [
+                { from: "pool$0", value: 1 },
+                { from: "converter$1", value: 2 },
             ],
-            ["pool$0", [{ from: "pool$2", value: 3.5 }]],
-        ]);
-        const newOutput: Map<ElementId, Packet[]> = new Map([
-            ["converter$0", [{ from: "pool$3", value: 2.5 }]],
-            ["pool$3", [{ from: "converter$5", value: 1.5 }]],
-        ]);
+
+            pool$0: [{ from: "pool$2", value: 3.5 }],
+        };
+        const newOutput: { [key: ElementId]: Packet[] } = {
+            converter$0: [{ from: "pool$3", value: 2.5 }],
+            pool$3: [{ from: "converter$5", value: 1.5 }],
+        };
         mergeOutputs(allOutputs, newOutput);
-        expect(allOutputs).toEqual(
-            new Map([
-                [
-                    "converter$0",
-                    [
-                        { from: "pool$0", value: 1 },
-                        { from: "converter$1", value: 2 },
-                        { from: "pool$3", value: 2.5 },
-                    ],
-                ],
-                ["pool$0", [{ from: "pool$2", value: 3.5 }]],
-                ["pool$3", [{ from: "converter$5", value: 1.5 }]],
-            ])
-        );
+        expect(allOutputs).toEqual({
+            converter$0: [
+                { from: "pool$0", value: 1 },
+                { from: "converter$1", value: 2 },
+                { from: "pool$3", value: 2.5 },
+            ],
+            pool$0: [{ from: "pool$2", value: 3.5 }],
+            pool$3: [{ from: "converter$5", value: 1.5 }],
+        });
     });
 });

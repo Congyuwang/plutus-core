@@ -13,16 +13,16 @@ export enum ConverterGroupTypes {
 }
 export type OrderedConverterGroups = {
     type: ConverterGroupTypes.Ordered;
-    groups: Map<ElementId, Element>[];
+    groups: { [key: ElementId]: Element }[];
     groupExecutionOrder: number[];
-    converterOfGroup: Map<number, ElementId>;
-    entryPointsToGroup: Map<number, Set<ElementId>>;
+    converterOfGroup: { [key: number]: ElementId };
+    entryPointsToGroup: { [key: number]: Set<ElementId> };
 };
 export type CyclicConverterGroups = {
     type: ConverterGroupTypes.Cyclic;
-    groups: Map<ElementId, Element>[];
-    converterOfGroup: Map<number, ElementId>;
-    entryPointsToGroup: Map<number, Set<ElementId>>;
+    groups: { [key: ElementId]: Element }[];
+    converterOfGroup: { [key: number]: ElementId };
+    entryPointsToGroup: { [key: number]: Set<ElementId> };
 };
 
 /**
@@ -55,9 +55,9 @@ export function compileGraph(
 export function activatePoolsAndGates(
     graph: Graph,
     checkMode: boolean = false
-): Map<ElementId, Element> {
+): { [key: ElementId]: Element } {
     const disabled: Set<ElementId> = new Set();
-    for (const e of graph.elements.values()) {
+    for (const e of Object.values(graph.elements)) {
         switch (e.type) {
             case ElementType.Pool:
                 if (!checkMode) e._nextTick(graph.variableScope());
@@ -66,25 +66,24 @@ export function activatePoolsAndGates(
                 if (!checkMode) {
                     e._nextTick();
                     const selected = e._getOutput();
-                    const outputs = e._getOutputs().keys();
-                    for (const id of outputs) {
-                        if (id !== selected) {
-                            disabled.add(id);
-                        }
-                    }
+                    Object.keys(e._getOutputs())
+                        .filter(id => id !== selected)
+                        .forEach(id => disabled.add(id));
                 } else {
-                    for (const [id, weight] of e._getOutputs()) {
-                        if (weight <= 0) {
-                            disabled.add(id);
-                        }
-                    }
+                    Object.entries(e._getOutputs())
+                        .filter(([, weight]) => weight <= 0)
+                        .forEach(([id]) => disabled.add(id));
                 }
                 break;
         }
     }
-    return new Map(
-        Array.from(graph.elements).filter(([id]) => !disabled.has(id))
-    );
+    const activeElements: { [key: ElementId]: Element } = {};
+    for (const [id, element] of Object.entries(graph.elements)) {
+        if (!disabled.has(id)) {
+            activeElements[id] = element;
+        }
+    }
+    return activeElements;
 }
 
 /**
@@ -96,12 +95,12 @@ export function activatePoolsAndGates(
  * @param isCheckMode whether this run is for checking Graph
  */
 export function cutAtPoolInput(
-    graphElements: Map<ElementId, Element>,
+    graphElements: { [key: ElementId]: Element },
     isCheckMode: boolean = false
-): Map<ElementId, Element>[] {
+): { [key: ElementId]: Element }[] {
     const visited: Set<ElementId> = new Set();
-    const groups: Map<ElementId, Element>[] = [];
-    for (const id of graphElements.keys()) {
+    const groups: { [key: ElementId]: Element }[] = [];
+    for (const id of Object.keys(graphElements)) {
         if (visited.has(id)) continue;
         const newGroup = buildGroup(
             graphElements,
@@ -124,12 +123,12 @@ export function cutAtPoolInput(
  * @param isCheckMode whether this run is for checking Graph
  */
 export function cutAtConverterInput(
-    graphElements: Map<ElementId, Element>,
+    graphElements: { [key: ElementId]: Element },
     isCheckMode: boolean = false
-): Map<ElementId, Element>[] {
+): { [key: ElementId]: Element }[] {
     const visited: Set<ElementId> = new Set();
-    const groups: Map<ElementId, Element>[] = [];
-    for (const id of graphElements.keys()) {
+    const groups: { [key: ElementId]: Element }[] = [];
+    for (const id of Object.keys(graphElements)) {
         if (visited.has(id)) continue;
         const newGroup = buildGroup(
             graphElements,
@@ -154,28 +153,28 @@ export function cutAtConverterInput(
  */
 export function computeSubGroupOrders(
     graph: Graph,
-    groups: Map<ElementId, Element>[]
+    groups: { [key: ElementId]: Element }[]
 ): ParallelGroup {
-    const groupToConverter: Map<number, ElementId> = new Map();
-    const converterToGroup: Map<ElementId, number> = new Map();
+    const groupToConverter: { [key: number]: ElementId } = {};
+    const converterToGroup: { [key: ElementId]: number } = {};
     // Pool or Converter to edge
-    const entryPointsToGroup: Map<number, Set<ElementId>> = new Map();
+    const entryPointsToGroup: { [key: number]: Set<ElementId> } = {};
 
     // build `groupToConverter`, `converterToGroup` and `entryPointsToGroup`
     for (const [groupId, subGroup] of groups.entries()) {
         const entryPoints: Set<ElementId> = new Set();
-        entryPointsToGroup.set(groupId, entryPoints);
-        for (const [elementId, e] of subGroup) {
+        entryPointsToGroup[groupId] = entryPoints;
+        for (const [elementId, e] of Object.entries(subGroup)) {
             switch (e.type) {
                 case ElementType.Converter: {
-                    groupToConverter.set(groupId, elementId);
+                    groupToConverter[groupId] = elementId;
                     break;
                 }
                 case ElementType.Edge: {
                     const from = graph.getElement(e.fromNode);
                     switch (from?.type) {
                         case ElementType.Converter:
-                            converterToGroup.set(e.fromNode, groupId);
+                            converterToGroup[e.fromNode] = groupId;
                             entryPoints.add(elementId);
                             break;
                         case ElementType.Pool:
@@ -193,8 +192,8 @@ export function computeSubGroupOrders(
     for (const i of groups.keys()) {
         directedGraph.addNode(i);
     }
-    for (const [groupId, converterId] of groupToConverter.entries()) {
-        const dependentGroup = converterToGroup.get(converterId);
+    for (const [groupId, converterId] of Object.entries(groupToConverter)) {
+        const dependentGroup = converterToGroup[converterId];
         if (dependentGroup !== undefined) {
             directedGraph.mergeEdge(groupId, dependentGroup);
         }
@@ -230,14 +229,14 @@ export function computeSubGroupOrders(
  * @param visited DFS `visited` table
  */
 function buildGroup(
-    graphElements: Map<ElementId, Element>,
+    graphElements: { [key: ElementId]: Element },
     startElement: ElementId,
     cutAtPoolInput: boolean,
     cutAtConverterOutput: boolean,
     isCheckMode: boolean,
     visited: Set<ElementId>
-): Map<ElementId, Element> {
-    const group: Map<ElementId, Element> = new Map();
+): { [key: ElementId]: Element } {
+    const group: { [key: ElementId]: Element } = {};
     buildGroupInner(
         graphElements,
         startElement,
@@ -252,20 +251,20 @@ function buildGroup(
 
 // DFS
 function buildGroupInner(
-    graphElements: Map<ElementId, Element>,
+    graphElements: { [key: ElementId]: Element },
     currentElement: ElementId,
     cutAtPoolInput: boolean,
     cutAtConverterOutput: boolean,
-    group: Map<ElementId, Element>,
+    group: { [key: ElementId]: Element },
     isCheckMode: boolean,
     visited: Set<ElementId>
 ) {
-    const element = graphElements.get(currentElement);
+    const element = graphElements[currentElement];
     if (!element || visited.has(currentElement)) {
         return;
     }
     // add current element to the group
-    group.set(currentElement, element);
+    group[currentElement] = element;
     // DFS, set visited to True
     visited.add(currentElement);
     // get ElementId of neighbors
@@ -301,7 +300,7 @@ function buildGroupInner(
  * @param isCheckMode whether this run is for checking Graph
  */
 function getNeighborsOf(
-    graphElements: Map<ElementId, Element>,
+    graphElements: { [key: ElementId]: Element },
     element: Element,
     cutAtPoolInput: boolean,
     cutAtConverterOutput: boolean,
@@ -329,7 +328,7 @@ function getNeighborsOf(
                 // for the purpose of checking graph logic
                 // enable all gate output edges.
                 const outputs = element._getOutputs();
-                for (const [output, weight] of outputs.entries()) {
+                for (const [output, weight] of Object.entries(outputs)) {
                     if (weight > 0) {
                         neighbors.push(output);
                     }
@@ -352,12 +351,12 @@ function getNeighborsOf(
             break;
         }
         case ElementType.Edge: {
-            const to = graphElements.get(element.toNode);
+            const to = graphElements[element.toNode];
             // do not connect to Pool, if cut at Pool input
             if (!cutAtPoolInput || to?.type !== ElementType.Pool) {
                 neighbors.push(element.toNode);
             }
-            const from = graphElements.get(element.fromNode);
+            const from = graphElements[element.fromNode];
             // do not connect from Converter, if cut at Converter output
             if (!cutAtConverterOutput || from?.type !== ElementType.Converter) {
                 neighbors.push(element.fromNode);

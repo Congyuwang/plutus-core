@@ -37,8 +37,8 @@ describe("test graph functionality", () => {
         expect(p1?.type).toEqual(ElementType.Pool);
         expect(p2?.type).toEqual(ElementType.Pool);
         expect(p3?.type).toEqual(ElementType.Pool);
-        expect(graph.elements.size).toEqual(5);
-        expect(graph.labels.size).toEqual(5);
+        expect(Object.keys(graph.elements).length).toEqual(5);
+        expect(Object.keys(graph.labels).length).toEqual(5);
         if (p0?.type === ElementType.Pool) {
             expect(p0._getOutput()).toEqual("e-0");
             expect(p0._getInput()).toBeUndefined();
@@ -80,8 +80,8 @@ describe("test graph functionality", () => {
             expect(p3._getInput()).toEqual("e-2");
             expect(p3._getOutput()).toEqual("e-4");
         }
-        expect(graph.elements.size).toEqual(8);
-        expect(graph.labels.size).toEqual(8);
+        expect(Object.keys(graph.elements).length).toEqual(8);
+        expect(Object.keys(graph.labels).length).toEqual(8);
 
         // p3 -> p0 -> p1 -> p2
         graph.deleteElement("e-2");
@@ -93,8 +93,8 @@ describe("test graph functionality", () => {
             expect(p3._getInput()).toBeUndefined();
             expect(p3._getOutput()).toEqual("e-4");
         }
-        expect(graph.elements.size).toEqual(7);
-        expect(graph.labels.size).toEqual(7);
+        expect(Object.keys(graph.elements).length).toEqual(7);
+        expect(Object.keys(graph.labels).length).toEqual(7);
 
         // p3    p1 -> p2
         graph.deleteElement("p-0");
@@ -110,8 +110,8 @@ describe("test graph functionality", () => {
             expect(p3._getInput()).toBeUndefined();
             expect(p3._getOutput()).toBeUndefined();
         }
-        expect(graph.elements.size).toEqual(4);
-        expect(graph.labels.size).toEqual(4);
+        expect(Object.keys(graph.elements).length).toEqual(4);
+        expect(Object.keys(graph.labels).length).toEqual(4);
 
         // p3 <- p1    p2
         graph.addEdge("e-3", "p-1", "p-3");
@@ -128,8 +128,8 @@ describe("test graph functionality", () => {
             expect(p3._getInput()).toEqual("e-3");
             expect(p3._getOutput()).toBeUndefined();
         }
-        expect(graph.elements.size).toEqual(4);
-        expect(graph.labels.size).toEqual(4);
+        expect(Object.keys(graph.elements).length).toEqual(4);
+        expect(Object.keys(graph.labels).length).toEqual(4);
 
         // p3    p2
         graph.deleteElement("p-1");
@@ -141,8 +141,8 @@ describe("test graph functionality", () => {
             expect(p3._getInput()).toBeUndefined();
             expect(p3._getOutput()).toBeUndefined();
         }
-        expect(graph.elements.size).toEqual(2);
-        expect(graph.labels.size).toEqual(2);
+        expect(Object.keys(graph.elements).length).toEqual(2);
+        expect(Object.keys(graph.labels).length).toEqual(2);
     });
 
     test("test graph pool, gate, and converter", () => {
@@ -165,7 +165,7 @@ describe("test graph functionality", () => {
         expect(p3?.type).toEqual(ElementType.Pool);
         expect(c0?.type).toEqual(ElementType.Converter);
         expect(g0?.type).toEqual(ElementType.Gate);
-        expect(graph.elements.size).toEqual(6);
+        expect(Object.keys(graph.elements).length).toEqual(6);
 
         // +-->g0------->------+
         // |   |               |
@@ -188,15 +188,13 @@ describe("test graph functionality", () => {
         }
         if (g0?.type === ElementType.Gate) {
             expect(g0._getInput()).toEqual("e-3");
-            expect(g0._getOutputs()).toEqual(
-                new Map([
-                    ["e-4", 1],
-                    ["e-5", 1],
-                ])
-            );
+            expect(g0._getOutputs()).toEqual({
+                "e-4": 1,
+                "e-5": 1,
+            });
         }
-        expect(graph.elements.size).toEqual(13);
-        expect(graph.labels.size).toEqual(13);
+        expect(Object.keys(graph.elements).length).toEqual(13);
+        expect(Object.keys(graph.labels).length).toEqual(13);
 
         // +------>g0------->------+
         // |      /|               |
@@ -213,16 +211,14 @@ describe("test graph functionality", () => {
         }
         if (g0?.type === ElementType.Gate) {
             expect(g0._getInput()).toEqual("e-3");
-            expect(g0._getOutputs()).toEqual(
-                new Map([
-                    ["e-4", 1],
-                    ["e-5", 1],
-                    ["e-7", 1],
-                ])
-            );
+            expect(g0._getOutputs()).toEqual({
+                "e-4": 1,
+                "e-5": 1,
+                "e-7": 1,
+            });
         }
-        expect(graph.elements.size).toEqual(14);
-        expect(graph.labels.size).toEqual(14);
+        expect(Object.keys(graph.elements).length).toEqual(14);
+        expect(Object.keys(graph.labels).length).toEqual(14);
 
         // +------>g0
         // |      /|
@@ -239,15 +235,13 @@ describe("test graph functionality", () => {
         }
         if (g0?.type === ElementType.Gate) {
             expect(g0._getInput()).toEqual("e-3");
-            expect(g0._getOutputs()).toEqual(
-                new Map([
-                    ["e-4", 1],
-                    ["e-7", 1],
-                ])
-            );
+            expect(g0._getOutputs()).toEqual({
+                "e-4": 1,
+                "e-7": 1,
+            });
         }
-        expect(graph.elements.size).toEqual(13);
-        expect(graph.labels.size).toEqual(13);
+        expect(Object.keys(graph.elements).length).toEqual(13);
+        expect(Object.keys(graph.labels).length).toEqual(13);
 
         //        g0
         //        /
@@ -264,19 +258,19 @@ describe("test graph functionality", () => {
         }
         if (g0?.type === ElementType.Gate) {
             expect(g0._getInput()).toBeUndefined();
-            expect(g0._getOutputs()).toEqual(new Map([["e-7", 1]]));
+            expect(g0._getOutputs()).toEqual({ "e-7": 1 });
         }
-        expect(graph.elements.size).toEqual(12);
-        expect(graph.labels.size).toEqual(12);
+        expect(Object.keys(graph.elements).length).toEqual(12);
+        expect(Object.keys(graph.labels).length).toEqual(12);
 
         // p3--->p0--->p1--->p2    g0
         graph.deleteElement("c-0");
         if (g0?.type === ElementType.Gate) {
             expect(g0._getInput()).toBeUndefined();
-            expect(g0._getOutputs()).toEqual(new Map());
+            expect(g0._getOutputs()).toEqual({});
         }
-        expect(graph.elements.size).toEqual(8);
-        expect(graph.labels.size).toEqual(8);
+        expect(Object.keys(graph.elements).length).toEqual(8);
+        expect(Object.keys(graph.labels).length).toEqual(8);
 
         //        +------->--------+
         //        |                |
@@ -289,24 +283,22 @@ describe("test graph functionality", () => {
         graph.addEdge("e-13", "p-0", "g-0");
         if (g0?.type === ElementType.Gate) {
             expect(g0._getInput()).toEqual("e-13");
-            expect(g0._getOutputs()).toEqual(
-                new Map([
-                    ["e-11", 1],
-                    ["e-12", 1],
-                ])
-            );
+            expect(g0._getOutputs()).toEqual({
+                "e-11": 1,
+                "e-12": 1,
+            });
         }
-        expect(graph.elements.size).toEqual(10);
-        expect(graph.labels.size).toEqual(10);
+        expect(Object.keys(graph.elements).length).toEqual(10);
+        expect(Object.keys(graph.labels).length).toEqual(10);
 
         // p3--->p0     p1     g0
         graph.deleteElement("p-2");
-        expect(graph.elements.size).toEqual(8);
-        expect(graph.labels.size).toEqual(8);
+        expect(Object.keys(graph.elements).length).toEqual(8);
+        expect(Object.keys(graph.labels).length).toEqual(8);
 
         // p3--->p0    p1
         graph.deleteElement("g-0");
-        expect(graph.elements.size).toEqual(4);
-        expect(graph.labels.size).toEqual(4);
+        expect(Object.keys(graph.elements).length).toEqual(4);
+        expect(Object.keys(graph.labels).length).toEqual(4);
     });
 });

@@ -37,6 +37,10 @@ class _Formula {
     public toString(): string {
         return this.expression.map(e => e.toString()).join("\n");
     }
+
+    public toJSON(): string {
+        return this.toString();
+    }
 }
 
 // The last expression of NumericFn should evaluate to a number
