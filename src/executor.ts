@@ -7,7 +7,6 @@ import {
     OrderedConverterGroups,
     ConverterGroupTypes,
 } from "./compiler";
-import { VariableScope } from "./formula";
 import assert from "assert";
 
 export type Packet = {
@@ -22,10 +21,8 @@ export type Packet = {
 export default function nextTick(graph: Graph) {
     // compute simulation execution order
     const compiledGraph = compileGraph(graph);
-    // variable scope for evaluating conditions and functions
-    const scope = graph.variableScope();
     // actually execute graph
-    const outputs = executeCompiledGraph(graph, compiledGraph, scope);
+    const outputs = executeCompiledGraph(graph, compiledGraph);
     // write to graph
     writeToGraph(graph, outputs);
 }
@@ -35,23 +32,21 @@ export default function nextTick(graph: Graph) {
  *
  * @param graph the Graph object
  * @param compiledGraph execution order and other info.
- * @param scope for evaluating conditions and functions
  */
 function executeCompiledGraph(
     graph: Graph,
-    compiledGraph: CompiledGraph,
-    scope: VariableScope
+    compiledGraph: CompiledGraph
 ): Map<ElementId, Packet[]> {
     let allOutputs: Map<ElementId, Packet[]> = new Map();
     for (const group of compiledGraph) {
         switch (group.type) {
             case ConverterGroupTypes.Cyclic: {
-                const outputs = executeCyclicSubgroup(graph, group, scope);
+                const outputs = executeCyclicSubgroup(graph, group);
                 mergeOutputs(allOutputs, outputs);
                 break;
             }
             case ConverterGroupTypes.Ordered: {
-                const outputs = executeOrderedSubgroup(graph, group, scope);
+                const outputs = executeOrderedSubgroup(graph, group);
                 mergeOutputs(allOutputs, outputs);
                 break;
             }
@@ -67,18 +62,16 @@ function executeCompiledGraph(
  * and then run the subgraph that contains this specific converter later.
  * @param graph the graph object
  * @param orderedSubgroups
- * @param scope
  */
 function executeOrderedSubgroup(
     graph: Graph,
-    orderedSubgroups: OrderedConverterGroups,
-    scope: VariableScope
+    orderedSubgroups: OrderedConverterGroups
 ): Map<ElementId, Packet[]> {
     let allOutputs: Map<ElementId, Packet[]> = new Map();
     for (const i of orderedSubgroups.groupExecutionOrder) {
         const subgraph = orderedSubgroups.groups[i];
         const entryPoints = orderedSubgroups.entryPointsToGroup.get(i);
-        const outputs = executeSubgroup(graph, entryPoints, scope);
+        const outputs = executeSubgroup(graph, entryPoints);
 
         const converterId = orderedSubgroups.converterOfGroup.get(i);
         const converter =
@@ -117,16 +110,14 @@ function executeOrderedSubgroup(
  * It writes to these converter-buffers at the end of this tick.
  * @param graph the Graph object
  * @param cyclicSubgroup
- * @param scope
  */
 function executeCyclicSubgroup(
     graph: Graph,
-    cyclicSubgroup: CyclicConverterGroups,
-    scope: VariableScope
+    cyclicSubgroup: CyclicConverterGroups
 ): Map<ElementId, Packet[]> {
     let allOutputs: Map<ElementId, Packet[]> = new Map();
     for (const entryPoints of cyclicSubgroup.entryPointsToGroup.values()) {
-        const outputs = executeSubgroup(graph, entryPoints, scope);
+        const outputs = executeSubgroup(graph, entryPoints);
         mergeOutputs(allOutputs, outputs);
     }
     return allOutputs;
@@ -138,8 +129,7 @@ function executeCyclicSubgroup(
  */
 function executeSubgroup(
     graph: Graph,
-    entryPoints: Set<ElementId> | undefined,
-    scope: VariableScope
+    entryPoints: Set<ElementId> | undefined
 ): Map<ElementId, Packet[]> {
     const output: Map<ElementId, Packet[]> = new Map();
     if (entryPoints === undefined || entryPoints.size === 0) {
@@ -151,7 +141,7 @@ function executeSubgroup(
     // and prevent potential infinite loop.
     const visited: Set<ElementId> = new Set();
     for (const edgeId of entryPoints) {
-        runEdge(graph, edgeId, visited, output, scope);
+        runEdge(graph, edgeId, visited, output);
     }
     return output;
 }
@@ -162,7 +152,6 @@ function runEdge(
     edgeId: ElementId,
     visited: Set<ElementId>,
     outputs: Map<ElementId, Packet[]>,
-    scope: VariableScope,
     packet?: Packet
 ) {
     if (visited.has(edgeId)) return;
@@ -180,9 +169,9 @@ function runEdge(
         case ElementType.Converter: {
             nextPacket.value = fromElement._takeFromState(
                 edge.isUnlimited()
-                    ? fromElement.maximumConvertable(scope) // take all
+                    ? fromElement.maximumConvertable(graph.variableScope()) // take all
                     : edge.getRate(),
-                scope
+                graph.variableScope()
             );
             break;
         }
@@ -220,7 +209,7 @@ function runEdge(
             if (nextEdge !== undefined) {
                 // continue forwarding if edge connected to Gate
                 // and there's something to forward
-                runEdge(graph, nextEdge, visited, outputs, scope, nextPacket);
+                runEdge(graph, nextEdge, visited, outputs, nextPacket);
             }
         } else {
             // write to the output in cases of Pool or Converter
