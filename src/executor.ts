@@ -77,7 +77,8 @@ function executeOrderedSubgroup(
         const outputs = executeSubgroup(subgraph, entryPoints, scope);
 
         const converterId = orderedSubgroups.converterOfGroup.get(i);
-        const converter = converterId ? subgraph.get(converterId) : undefined;
+        const converter =
+            converterId !== undefined ? subgraph.get(converterId) : undefined;
         for (const [id, packets] of outputs.entries()) {
             if (
                 converter !== undefined &&

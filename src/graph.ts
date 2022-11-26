@@ -85,7 +85,8 @@ class Graph {
     ) {
         const from = this.getElement(fromId);
         const to = this.getElement(toId);
-        const labelName = label ? label : this.autoLabel(ElementType.Edge);
+        const labelName =
+            label !== undefined ? label : this.autoLabel(ElementType.Edge);
         if (!from || !to) {
             throw Error("connecting Node with non-existing id");
         }
@@ -114,7 +115,8 @@ class Graph {
         if (this.elements.has(id)) {
             throw Error("id already exists");
         }
-        const labelName = label ? label : this.autoLabelNode(type);
+        const labelName =
+            label !== undefined ? label : this.autoLabelNode(type);
         if (this.labels.has(labelName)) {
             throw Error("duplicate label");
         }
