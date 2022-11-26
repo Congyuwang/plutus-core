@@ -102,6 +102,12 @@ class Edge {
     clone(): Edge {
         return new Edge(this.label, this.fromNode, this.toNode, this.rate);
     }
+
+    static fromJson(json: object): Edge {
+        const edge = new Edge("edge", "", "", 0);
+        Object.assign(edge, json);
+        return edge;
+    }
 }
 
 /**
@@ -296,6 +302,14 @@ class Pool {
     clone(): Pool {
         return new Pool(this);
     }
+
+    static fromJson(json: any): Pool {
+        const pool = new Pool("pool");
+        Object.assign(pool, json);
+        pool.condition = BooleanFn.fromString(json.condition);
+        pool.action = NumericFn.fromString(json.action);
+        return pool;
+    }
 }
 
 // Gate to distribute between edges
@@ -401,6 +415,12 @@ class Gate {
 
     clone(): Gate {
         return new Gate(this);
+    }
+
+    static fromJson(json: any): Gate {
+        const gate = new Gate("gate");
+        Object.assign(gate, json);
+        return gate;
     }
 }
 
@@ -548,6 +568,13 @@ class Converter {
 
     clone(): Converter {
         return new Converter(this);
+    }
+
+    static fromJson(json: any): Converter {
+        const converter = new Converter("converter");
+        Object.assign(converter, json);
+        converter.condition = BooleanFn.fromString(json.condition);
+        return converter;
     }
 
     private consumeBuffer(unitsProduced: number) {

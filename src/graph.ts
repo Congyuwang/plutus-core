@@ -398,6 +398,28 @@ class Graph {
         return new Graph(this);
     }
 
+    public static fromJSON(json: object): Graph {
+        const graph = new Graph();
+        Object.assign(graph, json);
+        Object.entries(graph.elements).forEach(([id, e]) => {
+            switch (e.type) {
+                case ElementType.Edge:
+                    graph.elements[id] = Edge.fromJson(e);
+                    break;
+                case ElementType.Converter:
+                    graph.elements[id] = Converter.fromJson(e);
+                    break;
+                case ElementType.Pool:
+                    graph.elements[id] = Pool.fromJson(e);
+                    break;
+                case ElementType.Gate:
+                    graph.elements[id] = Gate.fromJson(e);
+                    break;
+            }
+        });
+        return graph;
+    }
+
     // node.output = edge.from
     private setNodeOutputToEdge(from: Element, edgeId: ElementId) {
         switch (from.type) {

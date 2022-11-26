@@ -1,13 +1,6 @@
 import { mergeOutputs, Packet } from "../src/executor";
-import {
-    Converter,
-    ElementId,
-    ElementType,
-    Graph,
-    NodeType,
-    Pool,
-} from "../src";
-import { smallGraph, testCase2 } from "./testGraph";
+import { Converter, ElementId, Graph, NodeType, Pool } from "../src";
+import { smallGraph } from "./testGraph";
 
 describe("test simple cases", () => {
     test("test two pools with a gate", () => {
@@ -224,6 +217,43 @@ describe("test simple cases", () => {
             p0: 0,
             p1: 4.25,
         });
+        const graphReloaded = Graph.fromJSON(JSON.parse(JSON.stringify(graph)));
+        graphReloaded.nextTick();
+        expect((<Pool>graphReloaded.getElement("p0")).getState()).toEqual(1);
+        expect((<Pool>graphReloaded.getElement("p1")).getState()).toEqual(0);
+        expect((<Converter>graphReloaded.getElement("c0")).getBuffer()).toEqual(
+            {
+                p0: 1,
+                p1: 6,
+            }
+        );
+        graphReloaded.nextTick();
+        expect((<Pool>graphReloaded.getElement("p0")).getState()).toEqual(1);
+        expect((<Pool>graphReloaded.getElement("p1")).getState()).toEqual(0);
+        expect((<Converter>graphReloaded.getElement("c0")).getBuffer()).toEqual(
+            {
+                p0: 0,
+                p1: 5,
+            }
+        );
+        graphReloaded.nextTick();
+        expect((<Pool>graphReloaded.getElement("p0")).getState()).toEqual(0.5);
+        expect((<Pool>graphReloaded.getElement("p1")).getState()).toEqual(0);
+        expect((<Converter>graphReloaded.getElement("c0")).getBuffer()).toEqual(
+            {
+                p0: 0,
+                p1: 4.5,
+            }
+        );
+        graphReloaded.nextTick();
+        expect((<Pool>graphReloaded.getElement("p0")).getState()).toEqual(0.25);
+        expect((<Pool>graphReloaded.getElement("p1")).getState()).toEqual(0);
+        expect((<Converter>graphReloaded.getElement("c0")).getBuffer()).toEqual(
+            {
+                p0: 0,
+                p1: 4.25,
+            }
+        );
     });
 });
 
