@@ -427,7 +427,7 @@ class Converter {
             this.buffer = {};
         } else {
             this.label = arg.label;
-            this.fromEdges = arg.fromEdges;
+            this.fromEdges = new Set(arg.fromEdges);
             this.condition = BooleanFn.fromString(arg.condition.toString());
             this.requiredInputPerUnit = { ...arg.requiredInputPerUnit };
             this.buffer = { ...arg.buffer };
