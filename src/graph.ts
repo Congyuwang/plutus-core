@@ -107,6 +107,25 @@ class Graph {
     }
 
     /**
+     * Add a new Node object to the Graph.
+     * The indexes are updated automatically.
+     * Labels must be globally unique.
+     *
+     * @param node
+     * @param id
+     */
+    public addNodeObject(node: Node, id: ElementId) {
+        if (this.elements.has(id)) {
+            throw Error("id already exists");
+        }
+        if (this.labels.has(node.getLabel())) {
+            throw Error("duplicate label");
+        }
+        this.elements.set(id, node);
+        this.labels.set(node.getLabel(), id);
+    }
+
+    /**
      * Add a new Node to the graph.
      * @param type `NodeType.Pool` | `NodeType.Converter` | `NodeType.Gate`,
      * @param id a globally unique element id.
