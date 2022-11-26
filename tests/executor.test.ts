@@ -1,5 +1,5 @@
 import { mergeOutputs, Packet } from "../src/executor";
-import { ElementId, Graph, NodeType, Pool } from "../src";
+import { Converter, ElementId, Graph, NodeType, Pool } from "../src";
 
 describe("test simple cases", () => {
     test("test two pools with a gate", () => {
@@ -105,7 +105,69 @@ describe("test simple cases", () => {
         }
     });
 
-    test("test two pools with a gate", () => {});
+    test("pools with gates and converter (case 0)", () => {
+        const graph = new Graph();
+        graph.addNode(NodeType.Pool, "p0", "p0");
+        graph.addNode(NodeType.Pool, "p1", "p1");
+        graph.addNode(NodeType.Pool, "p2", "p2");
+        graph.addNode(NodeType.Converter, "c0");
+        graph.addNode(NodeType.Gate, "g0");
+        graph.setConverterRequiredInputPerUnit("c0", "p0", 2);
+        graph.setConverterRequiredInputPerUnit("c0", "p1", 1);
+        graph.addEdge("p0-c0", "p0", "c0", 4);
+        graph.addEdge("p1-c0", "p1", "c0", 4);
+        graph.addEdge("c0-g0", "c0", "g0", 1);
+        graph.addEdge("g0-p0", "g0", "p0", -1);
+        graph.addEdge("g0-p1", "g0", "p1", -1);
+        (<Pool>graph.getElement("p0")).setState(8);
+        (<Pool>graph.getElement("p1")).setState(12);
+        (<Pool>graph.getElement("p2")).setState(0);
+        graph.setGateOutputWeight("g0", "g0-p0", 0);
+        graph.setGateOutputWeight("g0", "g0-p1", 0);
+        graph.nextTick();
+        expect((<Pool>graph.getElement("p0")).getState()).toEqual(4);
+        expect((<Pool>graph.getElement("p1")).getState()).toEqual(8);
+        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual(
+            new Map([
+                ["p0", 2],
+                ["p1", 3],
+            ])
+        );
+        graph.nextTick();
+        expect((<Pool>graph.getElement("p0")).getState()).toEqual(0);
+        expect((<Pool>graph.getElement("p1")).getState()).toEqual(4);
+        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual(
+            new Map([
+                ["p0", 4],
+                ["p1", 6],
+            ])
+        );
+        graph.nextTick();
+        expect((<Pool>graph.getElement("p0")).getState()).toEqual(0);
+        expect((<Pool>graph.getElement("p1")).getState()).toEqual(0);
+        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual(
+            new Map([
+                ["p0", 2],
+                ["p1", 9],
+            ])
+        );
+        graph.nextTick();
+        expect((<Pool>graph.getElement("p0")).getState()).toEqual(0);
+        expect((<Pool>graph.getElement("p1")).getState()).toEqual(0);
+        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual(
+            new Map([
+                ["p0", 0],
+                ["p1", 8],
+            ])
+        );
+        graph.nextTick();
+        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual(
+            new Map([
+                ["p0", 0],
+                ["p1", 8],
+            ])
+        );
+    });
 });
 
 describe("test executor utility functions", () => {
