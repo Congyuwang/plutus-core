@@ -2,18 +2,16 @@
  * For the details of the testing graphs,
  * open file `../plutus-test-graph.drawio.xml` in `https://app.diagrams.net`
  */
-import { Gate, Graph, NodeType } from "../src";
+import { Graph, NodeType } from "../src";
 
 export function testCase1(): Graph {
     const graph = new Graph();
     addDeadCycle(graph);
     addTestGraph(graph);
     addCyclicConverter(graph);
-    const g2 = graph.getElement("g2") as Gate;
-    g2._setOutput("g2-p1", 0);
-    g2._setOutput("g2-p2", 0);
-    const g3 = graph.getElement("g3") as Gate;
-    g3._setOutput("g3-c4", 0);
+    graph.setGateOutputWeight("g2", "g2-p1", 0);
+    graph.setGateOutputWeight("g2", "g2-p2", 0);
+    graph.setGateOutputWeight("g3", "g3-c4", 0);
     return graph;
 }
 
@@ -22,11 +20,9 @@ export function testCase2(): Graph {
     addDeadCycle(graph);
     addTestGraph(graph);
     addCyclicConverter(graph);
-    const g2 = graph.getElement("g2") as Gate;
-    g2._setOutput("g2-c1", 0);
-    g2._setOutput("g2-p1", 0);
-    const g3 = graph.getElement("g3") as Gate;
-    g3._setOutput("g3-p4", 0);
+    graph.setGateOutputWeight("g2", "g2-c1", 0);
+    graph.setGateOutputWeight("g2", "g2-p1", 0);
+    graph.setGateOutputWeight("g3", "g3-p4", 0);
     return graph;
 }
 

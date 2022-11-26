@@ -2,7 +2,7 @@
  * For the details of the testing graphs,
  * open `../plutus-test-graph.drawio.xml` in `https://app.diagrams.net`
  */
-import { Gate, Graph } from "../src";
+import { Graph } from "../src";
 import {
     addCyclicConverter,
     addDeadCycle,
@@ -297,7 +297,7 @@ describe("test compiler module", () => {
             cyclicConverters: [new Set(["c3", "c4"])],
         });
 
-        (<Gate>graph.getElement("g3"))._setOutput("g3-c4", 0);
+        graph.setGateOutputWeight("g3", "g3-c4", 0);
         expect(graph.checkGraph().type).toEqual(CheckResultType.NoError);
     });
 });
