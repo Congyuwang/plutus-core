@@ -58,6 +58,14 @@ function executeCompiledGraph(
     return allOutputs;
 }
 
+/**
+ * Run strategy if `group.type === ConverterGroupTypes.Ordered`.
+ * Because a cycle does not exist in converters,
+ * it runs all subgraph which the converter inputs depend upon first,
+ * and then run the subgraph that contains this specific converter later.
+ * @param orderedSubgroups
+ * @param scope
+ */
 function executeOrderedSubgroup(
     orderedSubgroups: OrderedConverterGroups,
     scope: VariableScope
@@ -96,6 +104,15 @@ function executeOrderedSubgroup(
     return allOutputs;
 }
 
+/**
+ * Run strategy if `group.type === ConverterGroupTypes.Cyclic`.
+ * Because a dependent-relation cycle exists among converters,
+ * Each subgroup only consumes the buffer of each converter
+ * left from the previous tick.
+ * It writes to these converter-buffers at the end of this tick.
+ * @param cyclicSubgroup
+ * @param scope
+ */
 function executeCyclicSubgroup(
     cyclicSubgroup: CyclicConverterGroups,
     scope: VariableScope
@@ -111,10 +128,7 @@ function executeCyclicSubgroup(
 
 /**
  * Subgraph consists of only Edges and Gates, and at most one Converter.
- *
- * There are several scenarios:
- * - Edges and Gates form chains.
- * - Or, Edges and Gates form a cycle, resulting in no entry point.
+ * The common logic part of executing cyclic and ordered subgroup.
  */
 function executeSubgroup(
     subgraph: Map<ElementId, Element>,
