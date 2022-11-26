@@ -154,7 +154,7 @@ describe("test simple cases", () => {
         });
     });
 
-    test("pools with gates and converter (case 1)", () => {
+    test("pools with gates and converter (case 1), also testing graph clone", () => {
         const graph = smallGraph();
         graph.setGateOutputWeight("g0", "g0-p0", 1);
         graph.setGateOutputWeight("g0", "g0-p1", 0);
@@ -195,31 +195,32 @@ describe("test simple cases", () => {
             p0: 2,
             p1: 7,
         });
-        graph.nextTick();
-        expect((<Pool>graph.getElement("p0")).getState()).toEqual(1);
-        expect((<Pool>graph.getElement("p1")).getState()).toEqual(0);
-        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual({
+        const graphClone = graph.clone();
+        graphClone.nextTick();
+        expect((<Pool>graphClone.getElement("p0")).getState()).toEqual(1);
+        expect((<Pool>graphClone.getElement("p1")).getState()).toEqual(0);
+        expect((<Converter>graphClone.getElement("c0")).getBuffer()).toEqual({
             p0: 1,
             p1: 6,
         });
-        graph.nextTick();
-        expect((<Pool>graph.getElement("p0")).getState()).toEqual(1);
-        expect((<Pool>graph.getElement("p1")).getState()).toEqual(0);
-        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual({
+        graphClone.nextTick();
+        expect((<Pool>graphClone.getElement("p0")).getState()).toEqual(1);
+        expect((<Pool>graphClone.getElement("p1")).getState()).toEqual(0);
+        expect((<Converter>graphClone.getElement("c0")).getBuffer()).toEqual({
             p0: 0,
             p1: 5,
         });
-        graph.nextTick();
-        expect((<Pool>graph.getElement("p0")).getState()).toEqual(0.5);
-        expect((<Pool>graph.getElement("p1")).getState()).toEqual(0);
-        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual({
+        graphClone.nextTick();
+        expect((<Pool>graphClone.getElement("p0")).getState()).toEqual(0.5);
+        expect((<Pool>graphClone.getElement("p1")).getState()).toEqual(0);
+        expect((<Converter>graphClone.getElement("c0")).getBuffer()).toEqual({
             p0: 0,
             p1: 4.5,
         });
-        graph.nextTick();
-        expect((<Pool>graph.getElement("p0")).getState()).toEqual(0.25);
-        expect((<Pool>graph.getElement("p1")).getState()).toEqual(0);
-        expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual({
+        graphClone.nextTick();
+        expect((<Pool>graphClone.getElement("p0")).getState()).toEqual(0.25);
+        expect((<Pool>graphClone.getElement("p1")).getState()).toEqual(0);
+        expect((<Converter>graphClone.getElement("c0")).getBuffer()).toEqual({
             p0: 0,
             p1: 4.25,
         });
