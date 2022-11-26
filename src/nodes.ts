@@ -98,6 +98,10 @@ class Edge {
     isUnlimited(): boolean {
         return this.rate < 0;
     }
+
+    clone(): Edge {
+        return new Edge(this.label, this.fromNode, this.toNode, this.rate);
+    }
 }
 
 /**
@@ -117,12 +121,22 @@ class Pool {
     private fromEdge?: ElementId;
     private toEdge?: ElementId;
 
-    constructor(label: Label) {
-        this.label = _checkLabelValidity(label);
-        this.action = NumericFn.fromString("x");
-        this.condition = BooleanFn.fromString("true");
-        this.state = 0;
-        this.capacity = -1; // means infinite
+    constructor(arg: Label | Pool) {
+        if (typeof arg === "string") {
+            this.label = _checkLabelValidity(arg);
+            this.action = NumericFn.fromString("x");
+            this.condition = BooleanFn.fromString("true");
+            this.state = 0;
+            this.capacity = -1; // means infinite
+        } else {
+            this.label = arg.label;
+            this.action = NumericFn.fromString(arg.action.toString());
+            this.condition = BooleanFn.fromString(arg.condition.toString());
+            this.state = arg.state;
+            this.capacity = arg.capacity;
+            this.fromEdge = arg.fromEdge;
+            this.toEdge = arg.toEdge;
+        }
     }
 
     getLabel(): Label {
@@ -278,6 +292,10 @@ class Pool {
             this.setState(this.action.evaluate(scope));
         }
     }
+
+    clone(): Pool {
+        return new Pool(this);
+    }
 }
 
 // Gate to distribute between edges
@@ -292,9 +310,16 @@ class Gate {
     private selectedToEdge?: ElementId;
     private readonly toEdges: { [key: ElementId]: Weight };
 
-    constructor(label: Label) {
-        this.toEdges = {};
-        this.label = _checkLabelValidity(label);
+    constructor(arg: Label | Gate) {
+        if (typeof arg === "string") {
+            this.toEdges = {};
+            this.label = _checkLabelValidity(arg);
+        } else {
+            this.label = arg.label;
+            this.fromEdge = arg.fromEdge;
+            this.selectedToEdge = arg.selectedToEdge;
+            this.toEdges = { ...arg.toEdges };
+        }
     }
 
     getLabel(): Label {
@@ -373,6 +398,10 @@ class Gate {
         }
         return [...Object.keys(this.toEdges)][i];
     }
+
+    clone(): Gate {
+        return new Gate(this);
+    }
 }
 
 // Converter to convert tokens
@@ -389,12 +418,20 @@ class Converter {
     private readonly requiredInputPerUnit: { [key: ElementId]: number };
     private readonly buffer: { [key: ElementId]: number };
 
-    constructor(label: Label) {
-        this.label = label;
-        this.fromEdges = new Set();
-        this.condition = new BooleanFn(["true"]);
-        this.requiredInputPerUnit = {};
-        this.buffer = {};
+    constructor(arg: Label | Converter) {
+        if (typeof arg === "string") {
+            this.label = arg;
+            this.fromEdges = new Set();
+            this.condition = new BooleanFn(["true"]);
+            this.requiredInputPerUnit = {};
+            this.buffer = {};
+        } else {
+            this.label = arg.label;
+            this.fromEdges = arg.fromEdges;
+            this.condition = BooleanFn.fromString(arg.condition.toString());
+            this.requiredInputPerUnit = { ...arg.requiredInputPerUnit };
+            this.buffer = { ...arg.buffer };
+        }
     }
 
     // add new input element from edges
@@ -507,6 +544,10 @@ class Converter {
             return 0;
         }
         return min(ratio);
+    }
+
+    clone(): Converter {
+        return new Converter(this);
     }
 
     private consumeBuffer(unitsProduced: number) {

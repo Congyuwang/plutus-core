@@ -46,15 +46,27 @@ class Graph {
         edge: number;
     };
 
-    constructor() {
-        this.elements = {};
-        this.labels = {};
-        this.autoLabelCounter = {
-            converter: 0,
-            edge: 0,
-            gate: 0,
-            pool: 0,
-        };
+    /**
+     * Deep clone the graph use constructor `new Graph(graph)`.
+     */
+    constructor(graph?: Graph) {
+        if (graph === undefined) {
+            this.elements = {};
+            this.labels = {};
+            this.autoLabelCounter = {
+                converter: 0,
+                edge: 0,
+                gate: 0,
+                pool: 0,
+            };
+        } else {
+            this.elements = {};
+            Object.entries(graph.elements).forEach(([id, e]) => {
+                this.elements[id] = e.clone();
+            });
+            this.labels = { ...graph.labels };
+            this.autoLabelCounter = { ...graph.autoLabelCounter };
+        }
     }
 
     /**
@@ -380,6 +392,10 @@ class Graph {
                 type: CheckResultType.NoError,
             };
         }
+    }
+
+    public clone(): Graph {
+        return new Graph(this);
     }
 
     // node.output = edge.from
