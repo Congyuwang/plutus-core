@@ -231,23 +231,35 @@ class Graph {
         converter._setRequiredInputPerUnit(requiredId, amount);
     }
 
-    public getConverterRequiredInputPerUnit(id: ElementId): Map<Label, number> {
-        const converter = this.getElement(id);
-        if (!converter || converter.type !== ElementType.Converter) {
-            throw Error("Selected element is not a converter");
+    /**
+     * Adjust weights of the outputs of a gate.
+     *
+     * The internal remembers the required element using ElementID,
+     * which is supposed to remain immutable, whereas the Label
+     * might change.
+     * @param gateId the id of the Gate
+     * @param edgeId the id of the output Edge
+     *               (must be an already-connected edge)
+     * @param weight the weight to that output. (If weight < 0)
+     *        the actual weight is set to 0.
+     */
+    public setGateOutputWeight(
+        gateId: ElementId,
+        edgeId: ElementId,
+        weight: number = DEFAULT_WEIGHT
+    ) {
+        const gate = this.getElement(gateId);
+        if (!gate || gate.type !== ElementType.Gate) {
+            throw Error("Selected element is not a gate");
         }
-        const returnMap: Map<Label, number> = new Map();
-        const requiredInput = converter._getRequiredInputPerUnit();
-        for (const [id, requirement] of requiredInput) {
-            const element = this.getElement(id);
-            if (element !== undefined) {
-                returnMap.set(element.getLabel(), requirement);
-            } else {
-                // remove invalid input entries
-                requiredInput.delete(id);
-            }
+        const edge = this.getElement(edgeId);
+        if (edge?.type !== ElementType.Edge) {
+            throw Error("the output element must be specified as an edge");
         }
-        return returnMap;
+        if (!gate._getOutputs().has(edgeId)) {
+            throw Error("the output edge is not connected to this gate");
+        }
+        gate._setOutput(edgeId, Math.max(0, weight));
     }
 
     /**
