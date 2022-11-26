@@ -25,6 +25,32 @@ export function testCase2(): Graph {
     graph.setGateOutputWeight("g3", "g3-p4", 0);
     return graph;
 }
+/**
+ * ```
+ * +------<--------+
+ * |               |
+ * p0-[4]->c0-[1]->g0 (consume 2*p0 + 1*p1)
+ *         |       |
+ * p1-[4]->+       |
+ * |               |
+ * +------<--------+
+ * ```
+ */
+export function smallGraph(): Graph {
+    const graph = new Graph();
+    graph.addNode(NodeType.Pool, "p0", "p0");
+    graph.addNode(NodeType.Pool, "p1", "p1");
+    graph.addNode(NodeType.Converter, "c0");
+    graph.addNode(NodeType.Gate, "g0");
+    graph.setConverterRequiredInputPerUnit("c0", "p0", 2);
+    graph.setConverterRequiredInputPerUnit("c0", "p1", 1);
+    graph.addEdge("p0-c0", "p0", "c0", 4);
+    graph.addEdge("p1-c0", "p1", "c0", 4);
+    graph.addEdge("c0-g0", "c0", "g0", 1);
+    graph.addEdge("g0-p0", "g0", "p0", -1);
+    graph.addEdge("g0-p1", "g0", "p1", -1);
+    return graph;
+}
 
 export function addTestGraph(graph: Graph) {
     graph.addNode(NodeType.Pool, "p0", "p0");
