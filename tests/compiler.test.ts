@@ -11,9 +11,9 @@ import {
     activatePoolsAndGates,
     CompiledGraph,
     computeSubGroupOrders,
+    ConverterGroupTypes,
     cutAtConverterInput,
     cutAtPoolInput,
-    ConverterGroupTypes,
 } from "../src/compiler";
 
 describe("test compiler module", () => {
@@ -178,9 +178,48 @@ describe("test compiler module", () => {
         const group0 = compiledGraph.find(g => g.groups.length === 1);
         const group1 = compiledGraph.find(g => g.groups.length === 3);
         const group2 = compiledGraph.find(g => g.groups.length === 4);
-        expect(group0).not.toEqual(undefined);
-        expect(group1).not.toEqual(undefined);
-        expect(group2).not.toEqual(undefined);
+        // no cyclic group
+        expect(group0?.type).toEqual(ConverterGroupTypes.Ordered);
+        expect(group1?.type).toEqual(ConverterGroupTypes.Ordered);
+        expect(group2?.type).toEqual(ConverterGroupTypes.Ordered);
+        // entry points
+        expect(new Set([...group0!.entryPointsToGroup.values()])).toEqual(
+            new Set([new Set()])
+        );
+        expect(new Set([...group1!.entryPointsToGroup.values()])).toEqual(
+            new Set([
+                new Set(["c4-c3", "p4-c3"]),
+                new Set(["c3-g3"]),
+                new Set([]),
+            ])
+        );
+        expect(new Set([...group2!.entryPointsToGroup.values()])).toEqual(
+            new Set([
+                new Set(["p1-c2", "p2-c2"]),
+                new Set(["p3-c1", "c0-g2", "c2-c1"]),
+                new Set(["p0-c0"]),
+                new Set(["c1-p0"]),
+            ])
+        );
+        if (group1?.type === ConverterGroupTypes.Ordered) {
+            const groups = group1.groupExecutionOrder.map(
+                o => group1.groups[o]
+            );
+            expect(groups.findIndex(g => g.has("c4"))).toBeLessThan(
+                groups.findIndex(g => g.has("c3"))
+            );
+        }
+        if (group2?.type === ConverterGroupTypes.Ordered) {
+            const groups = group2.groupExecutionOrder.map(
+                o => group2.groups[o]
+            );
+            expect(groups.findIndex(g => g.has("c0"))).toBeLessThan(
+                groups.findIndex(g => g.has("g2"))
+            );
+            expect(groups.findIndex(g => g.has("c2"))).toBeLessThan(
+                groups.findIndex(g => g.has("c1"))
+            );
+        }
     });
 
     test("test subgroupOrders (2)", () => {
@@ -199,17 +238,54 @@ describe("test compiler module", () => {
         const group3 = compiledGraph.find(
             g => g.groups.length === 2 && g.type === ConverterGroupTypes.Cyclic
         );
-        expect(group0).not.toEqual(undefined);
-        expect(group1).not.toEqual(undefined);
-        expect(group2).not.toEqual(undefined);
-        expect(group3).not.toEqual(undefined);
+        expect(group0?.type).toEqual(ConverterGroupTypes.Ordered);
+        expect(group1?.type).toEqual(ConverterGroupTypes.Ordered);
+        expect(group2?.type).toEqual(ConverterGroupTypes.Ordered);
+        expect(group3?.type).toEqual(ConverterGroupTypes.Cyclic);
+        // entry points
+        expect(new Set([...group0!.entryPointsToGroup.values()])).toEqual(
+            new Set([new Set()])
+        );
+        expect(new Set([...group1!.entryPointsToGroup.values()])).toEqual(
+            new Set([new Set(["p0-c0"]), new Set(["c0-g2"])])
+        );
+        expect(new Set([...group2!.entryPointsToGroup.values()])).toEqual(
+            new Set([
+                new Set(["p2-c2", "p1-c2"]),
+                new Set(["c2-c1", "p3-c1"]),
+                new Set(["c1-p0"]),
+            ])
+        );
+        expect(new Set([...group3!.entryPointsToGroup.values()])).toEqual(
+            new Set([new Set(["c4-c3", "p4-c3"]), new Set(["c3-g3"])])
+        );
+        if (group1?.type === ConverterGroupTypes.Ordered) {
+            const groups = group1.groupExecutionOrder.map(
+                o => group1.groups[o]
+            );
+            expect(groups.findIndex(g => g.has("c0"))).toBeLessThan(
+                groups.findIndex(g => g.has("g2"))
+            );
+        }
+        if (group2?.type === ConverterGroupTypes.Ordered) {
+            const groups = group2.groupExecutionOrder.map(
+                o => group2.groups[o]
+            );
+            expect(groups.findIndex(g => g.has("c2"))).toBeLessThan(
+                groups.findIndex(g => g.has("c1"))
+            );
+        }
     });
 
     test("test checkGraph API (1)", () => {
         const graph = new Graph();
+
         addDeadCycle(graph);
+        expect(graph.checkGraph().type).toEqual(CheckResultType.NoError);
+
         addTestGraph(graph);
         expect(graph.checkGraph().type).toEqual(CheckResultType.NoError);
+
         addCyclicConverter(graph);
         expect(graph.checkGraph()).toEqual({
             type: CheckResultType.Warning,
