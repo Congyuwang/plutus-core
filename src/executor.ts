@@ -122,7 +122,7 @@ function executeSubgroup(
     scope: VariableScope
 ): Map<ElementId, Packet[]> {
     const output: Map<ElementId, Packet[]> = new Map();
-    if (!entryPoints) {
+    if (entryPoints === undefined || entryPoints.size === 0) {
         // dead group (i.e. group with no input from Converter or Pool.)
         return output;
     }
@@ -169,7 +169,7 @@ function doEdgeWork(
             break;
         }
         case ElementType.Gate: {
-            if (!packet) {
+            if (packet === undefined) {
                 // nothing to forward, end recursion
                 return;
             } else {

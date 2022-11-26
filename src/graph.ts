@@ -142,13 +142,13 @@ class Graph {
 
     public getElementByLabel(label: Label): Element | undefined {
         const id = this.labels.get(label);
-        if (!id) return undefined;
+        if (id === undefined) return undefined;
         return this.getElement(id);
     }
 
     public getStateByLabel(label: Label): number | undefined {
         const e = this.getElementByLabel(label);
-        if (!e) return e;
+        if (e === undefined) return e;
         switch (e.type) {
             case ElementType.Pool:
                 return e.getState();
@@ -172,7 +172,7 @@ class Graph {
     public setLabel(id: ElementId, label: Label): Element {
         // check that id exists
         const e = this.elements.get(id);
-        if (!e) {
+        if (e === undefined) {
             throw new Error("id not found");
         }
         // check that new label is not duplicated
@@ -202,7 +202,7 @@ class Graph {
             throw Error("Selected element is not a converter");
         }
         const requiredId = this.labels.get(label);
-        if (!requiredId) {
+        if (requiredId === undefined) {
             throw Error(`label '${label}' does not exist`);
         }
         converter._setRequiredInputPerUnit(requiredId, amount);
@@ -250,7 +250,7 @@ class Graph {
      */
     public deleteElement(id: ElementId) {
         const e = this.elements.get(id);
-        if (!e) return;
+        if (e === undefined) return;
         switch (e.type) {
             case ElementType.Pool:
                 const poolInputEdge = e._getInput();
