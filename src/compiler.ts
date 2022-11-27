@@ -260,7 +260,7 @@ function buildGroupInner(
     visited: Set<ElementId>
 ) {
     const element = graphElements[currentElement];
-    if (!element || visited.has(currentElement)) {
+    if (element === undefined || visited.has(currentElement)) {
         return;
     }
     // add current element to the group

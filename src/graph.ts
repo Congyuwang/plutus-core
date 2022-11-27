@@ -101,7 +101,7 @@ class Graph {
         const to = this.getElement(toId);
         const labelName =
             label !== undefined ? label : this.autoLabel(ElementType.Edge);
-        if (!from || !to) {
+        if (from === undefined || to === undefined) {
             throw Error("connecting Node with non-existing id");
         }
         if (edgeId in this.elements) {
@@ -237,7 +237,10 @@ class Graph {
         amount: number
     ) {
         const converter = this.getElement(converterId);
-        if (!converter || converter.type !== ElementType.Converter) {
+        if (
+            converter === undefined ||
+            converter.type !== ElementType.Converter
+        ) {
             throw Error("Selected element is not a converter");
         }
         const requiredElement = this.getElement(inputId);
@@ -274,7 +277,7 @@ class Graph {
         weight: number = DEFAULT_WEIGHT
     ) {
         const gate = this.getElement(gateId);
-        if (!gate || gate.type !== ElementType.Gate) {
+        if (gate === undefined || gate.type !== ElementType.Gate) {
             throw Error("Selected element is not a gate");
         }
         const edge = this.getElement(edgeId);
