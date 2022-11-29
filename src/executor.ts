@@ -1,17 +1,17 @@
 import { Graph } from "./graph";
 import { ElementId, ElementType } from "./nodes";
 import {
-    CompiledGraph,
-    compileGraph,
-    CyclicConverterGroups,
-    OrderedConverterGroups,
-    ConverterGroupTypes,
+  CompiledGraph,
+  compileGraph,
+  CyclicConverterGroups,
+  OrderedConverterGroups,
+  ConverterGroupTypes,
 } from "./compiler";
 import assert from "assert";
 
 export type Packet = {
-    from: ElementId;
-    value: number;
+  from: ElementId;
+  value: number;
 };
 
 /**
@@ -19,12 +19,12 @@ export type Packet = {
  * @param graph the Graph object
  */
 export default function nextTick(graph: Graph) {
-    // compute simulation execution order
-    const compiledGraph = compileGraph(graph);
-    // actually execute graph
-    const outputs = executeCompiledGraph(graph, compiledGraph);
-    // write to graph
-    writeToGraph(graph, outputs);
+  // compute simulation execution order
+  const compiledGraph = compileGraph(graph);
+  // actually execute graph
+  const outputs = executeCompiledGraph(graph, compiledGraph);
+  // write to graph
+  writeToGraph(graph, outputs);
 }
 
 /**
@@ -34,25 +34,25 @@ export default function nextTick(graph: Graph) {
  * @param compiledGraph execution order and other info.
  */
 function executeCompiledGraph(
-    graph: Graph,
-    compiledGraph: CompiledGraph
+  graph: Graph,
+  compiledGraph: CompiledGraph
 ): { [key: ElementId]: Packet[] } {
-    let allOutputs: { [key: ElementId]: Packet[] } = {};
-    for (const group of compiledGraph) {
-        switch (group.type) {
-            case ConverterGroupTypes.Cyclic: {
-                const outputs = executeCyclicSubgroup(graph, group);
-                mergeOutputs(allOutputs, outputs);
-                break;
-            }
-            case ConverterGroupTypes.Ordered: {
-                const outputs = executeOrderedSubgroup(graph, group);
-                mergeOutputs(allOutputs, outputs);
-                break;
-            }
-        }
+  let allOutputs: { [key: ElementId]: Packet[] } = {};
+  for (const group of compiledGraph) {
+    switch (group.type) {
+      case ConverterGroupTypes.Cyclic: {
+        const outputs = executeCyclicSubgroup(graph, group);
+        mergeOutputs(allOutputs, outputs);
+        break;
+      }
+      case ConverterGroupTypes.Ordered: {
+        const outputs = executeOrderedSubgroup(graph, group);
+        mergeOutputs(allOutputs, outputs);
+        break;
+      }
     }
-    return allOutputs;
+  }
+  return allOutputs;
 }
 
 /**
@@ -64,42 +64,42 @@ function executeCompiledGraph(
  * @param orderedSubgroups
  */
 function executeOrderedSubgroup(
-    graph: Graph,
-    orderedSubgroups: OrderedConverterGroups
+  graph: Graph,
+  orderedSubgroups: OrderedConverterGroups
 ): { [key: ElementId]: Packet[] } {
-    let allOutputs: { [key: ElementId]: Packet[] } = {};
-    for (const i of orderedSubgroups.groupExecutionOrder) {
-        const subgraph = orderedSubgroups.groups[i];
-        const entryPoints = orderedSubgroups.entryPointsToGroup[i];
-        const outputs = executeSubgroup(graph, entryPoints);
+  let allOutputs: { [key: ElementId]: Packet[] } = {};
+  for (const i of orderedSubgroups.groupExecutionOrder) {
+    const subgraph = orderedSubgroups.groups[i];
+    const entryPoints = orderedSubgroups.entryPointsToGroup[i];
+    const outputs = executeSubgroup(graph, entryPoints);
 
-        const converterId = orderedSubgroups.converterOfGroup[i];
-        const converter =
-            converterId !== undefined ? subgraph[converterId] : undefined;
-        for (const [id, packets] of Object.entries(outputs)) {
-            if (
-                converter !== undefined &&
-                converterId !== undefined &&
-                id === converterId &&
-                converter.type === ElementType.Converter
-            ) {
-                // write to converter if this subgroup has a converter
-                const converterOutput = outputs[converterId];
-                if (converterOutput !== undefined) {
-                    for (const packet of converterOutput) {
-                        converter._addToBuffer(packet.from, packet.value);
-                    }
-                }
-            } else {
-                // Otherwise, aggregate outputs
-                if (!(id in allOutputs)) {
-                    allOutputs[id] = [];
-                }
-                allOutputs[id]!.push(...packets);
-            }
+    const converterId = orderedSubgroups.converterOfGroup[i];
+    const converter =
+      converterId !== undefined ? subgraph[converterId] : undefined;
+    for (const [id, packets] of Object.entries(outputs)) {
+      if (
+        converter !== undefined &&
+        converterId !== undefined &&
+        id === converterId &&
+        converter.type === ElementType.Converter
+      ) {
+        // write to converter if this subgroup has a converter
+        const converterOutput = outputs[converterId];
+        if (converterOutput !== undefined) {
+          for (const packet of converterOutput) {
+            converter._addToBuffer(packet.from, packet.value);
+          }
         }
+      } else {
+        // Otherwise, aggregate outputs
+        if (!(id in allOutputs)) {
+          allOutputs[id] = [];
+        }
+        allOutputs[id]!.push(...packets);
+      }
     }
-    return allOutputs;
+  }
+  return allOutputs;
 }
 
 /**
@@ -112,17 +112,15 @@ function executeOrderedSubgroup(
  * @param cyclicSubgroup
  */
 function executeCyclicSubgroup(
-    graph: Graph,
-    cyclicSubgroup: CyclicConverterGroups
+  graph: Graph,
+  cyclicSubgroup: CyclicConverterGroups
 ): { [key: ElementId]: Packet[] } {
-    let allOutputs: { [key: ElementId]: Packet[] } = {};
-    for (const entryPoints of Object.values(
-        cyclicSubgroup.entryPointsToGroup
-    )) {
-        const outputs = executeSubgroup(graph, entryPoints);
-        mergeOutputs(allOutputs, outputs);
-    }
-    return allOutputs;
+  let allOutputs: { [key: ElementId]: Packet[] } = {};
+  for (const entryPoints of Object.values(cyclicSubgroup.entryPointsToGroup)) {
+    const outputs = executeSubgroup(graph, entryPoints);
+    mergeOutputs(allOutputs, outputs);
+  }
+  return allOutputs;
 }
 
 /**
@@ -130,97 +128,97 @@ function executeCyclicSubgroup(
  * The common logic part of executing cyclic and ordered subgroup.
  */
 function executeSubgroup(
-    graph: Graph,
-    entryPoints: Set<ElementId> | undefined
+  graph: Graph,
+  entryPoints: Set<ElementId> | undefined
 ): { [key: ElementId]: Packet[] } {
-    const output: { [key: ElementId]: Packet[] } = {};
-    if (entryPoints === undefined || entryPoints.size === 0) {
-        // dead group (i.e. group with no input from Converter or Pool.)
-        return output;
-    }
-
-    // Use `visited` to keep track of visited edges
-    // and prevent potential infinite loop.
-    const visited: Set<ElementId> = new Set();
-    for (const edgeId of entryPoints) {
-        runEdge(graph, edgeId, visited, output);
-    }
+  const output: { [key: ElementId]: Packet[] } = {};
+  if (entryPoints === undefined || entryPoints.size === 0) {
+    // dead group (i.e. group with no input from Converter or Pool.)
     return output;
+  }
+
+  // Use `visited` to keep track of visited edges
+  // and prevent potential infinite loop.
+  const visited: Set<ElementId> = new Set();
+  for (const edgeId of entryPoints) {
+    runEdge(graph, edgeId, visited, output);
+  }
+  return output;
 }
 
 // all output are cached in outputs Map and not written to Graph
 function runEdge(
-    graph: Graph,
-    edgeId: ElementId,
-    visited: Set<ElementId>,
-    outputs: { [key: ElementId]: Packet[] },
-    packet?: Packet
+  graph: Graph,
+  edgeId: ElementId,
+  visited: Set<ElementId>,
+  outputs: { [key: ElementId]: Packet[] },
+  packet?: Packet
 ) {
-    if (visited.has(edgeId)) return;
-    visited.add(edgeId);
-    const edge = graph.getElement(edgeId);
-    if (edge?.type !== ElementType.Edge) return; // never happens
+  if (visited.has(edgeId)) return;
+  visited.add(edgeId);
+  const edge = graph.getElement(edgeId);
+  if (edge?.type !== ElementType.Edge) return; // never happens
 
-    // source
-    let nextPacket: Packet = {
-        from: edge.fromNode,
-        value: 0,
-    };
-    const fromElement = graph.getElement(edge.fromNode);
-    switch (fromElement?.type) {
-        case ElementType.Converter: {
-            nextPacket.value = fromElement._takeFromState(
-                edge.isUnlimited()
-                    ? fromElement.maximumConvertable(graph.variableScope()) // take all
-                    : edge.getRate(),
-                graph.variableScope()
-            );
-            break;
-        }
-        case ElementType.Pool: {
-            nextPacket.value = edge.isUnlimited()
-                ? fromElement._takeFromPool(fromElement.getState()) // take all
-                : fromElement._takeFromPool(edge.getRate());
-            break;
-        }
-        case ElementType.Gate: {
-            if (packet === undefined) {
-                // nothing to forward, end recursion
-                return;
-            } else {
-                // forwarding with possible loss
-                nextPacket.value = edge.isUnlimited()
-                    ? packet.value // lossless take all
-                    : Math.min(packet.value, edge.getRate());
-                nextPacket.from = packet.from;
-            }
-            break;
-        }
-        case ElementType.Edge:
-            throw Error("bad data structure (edge-edge connection)");
+  // source
+  let nextPacket: Packet = {
+    from: edge.fromNode,
+    value: 0,
+  };
+  const fromElement = graph.getElement(edge.fromNode);
+  switch (fromElement?.type) {
+    case ElementType.Converter: {
+      nextPacket.value = fromElement._takeFromState(
+        edge.isUnlimited()
+          ? fromElement.maximumConvertable(graph.variableScope()) // take all
+          : edge.getRate(),
+        graph.variableScope()
+      );
+      break;
     }
-
-    // target
-    const toElement = graph.getElement(edge.toNode);
-
-    // next step if the packet is not empty
-    if (nextPacket.value > 0) {
-        // recurse if the next element is Gate
-        if (toElement?.type === ElementType.Gate) {
-            const nextEdge = toElement._getOutput();
-            if (nextEdge !== undefined) {
-                // continue forwarding if edge connected to Gate
-                // and there's something to forward
-                runEdge(graph, nextEdge, visited, outputs, nextPacket);
-            }
-        } else {
-            // write to the output in cases of Pool or Converter
-            if (!(edge.toNode in outputs)) {
-                outputs[edge.toNode] = [];
-            }
-            outputs[edge.toNode]!.push(nextPacket);
-        }
+    case ElementType.Pool: {
+      nextPacket.value = edge.isUnlimited()
+        ? fromElement._takeFromPool(fromElement.getState()) // take all
+        : fromElement._takeFromPool(edge.getRate());
+      break;
     }
+    case ElementType.Gate: {
+      if (packet === undefined) {
+        // nothing to forward, end recursion
+        return;
+      } else {
+        // forwarding with possible loss
+        nextPacket.value = edge.isUnlimited()
+          ? packet.value // lossless take all
+          : Math.min(packet.value, edge.getRate());
+        nextPacket.from = packet.from;
+      }
+      break;
+    }
+    case ElementType.Edge:
+      throw Error("bad data structure (edge-edge connection)");
+  }
+
+  // target
+  const toElement = graph.getElement(edge.toNode);
+
+  // next step if the packet is not empty
+  if (nextPacket.value > 0) {
+    // recurse if the next element is Gate
+    if (toElement?.type === ElementType.Gate) {
+      const nextEdge = toElement._getOutput();
+      if (nextEdge !== undefined) {
+        // continue forwarding if edge connected to Gate
+        // and there's something to forward
+        runEdge(graph, nextEdge, visited, outputs, nextPacket);
+      }
+    } else {
+      // write to the output in cases of Pool or Converter
+      if (!(edge.toNode in outputs)) {
+        outputs[edge.toNode] = [];
+      }
+      outputs[edge.toNode]!.push(nextPacket);
+    }
+  }
 }
 
 /**
@@ -229,33 +227,33 @@ function runEdge(
  * @param allOutputs outputs collected from all subgraph.
  */
 export function writeToGraph(
-    graph: Graph,
-    allOutputs: { [key: ElementId]: Packet[] }
+  graph: Graph,
+  allOutputs: { [key: ElementId]: Packet[] }
 ) {
-    for (const [id, packets] of Object.entries(allOutputs)) {
-        const e = graph.getElement(id);
-        switch (e?.type) {
-            case ElementType.Pool:
-                assert(packets.length == 1);
-                e._addToPool(packets[0]!.value);
-                break;
-            case ElementType.Converter:
-                for (const packet of packets) {
-                    e._addToBuffer(packet.from, packet.value);
-                }
-                break;
+  for (const [id, packets] of Object.entries(allOutputs)) {
+    const e = graph.getElement(id);
+    switch (e?.type) {
+      case ElementType.Pool:
+        assert(packets.length == 1);
+        e._addToPool(packets[0]!.value);
+        break;
+      case ElementType.Converter:
+        for (const packet of packets) {
+          e._addToBuffer(packet.from, packet.value);
         }
+        break;
     }
+  }
 }
 
 export function mergeOutputs(
-    to: { [key: ElementId]: Packet[] },
-    from: { [key: ElementId]: Packet[] }
+  to: { [key: ElementId]: Packet[] },
+  from: { [key: ElementId]: Packet[] }
 ) {
-    for (const [id, packets] of Object.entries(from)) {
-        if (!(id in to)) {
-            to[id] = [];
-        }
-        to[id]!.push(...packets);
+  for (const [id, packets] of Object.entries(from)) {
+    if (!(id in to)) {
+      to[id] = [];
     }
+    to[id]!.push(...packets);
+  }
 }
