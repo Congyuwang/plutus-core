@@ -260,24 +260,36 @@ class Graph {
     inputId: ElementId,
     amount: number
   ) {
-    const converter = this.getElement(converterId);
-    if (converter === undefined || converter.type !== ElementType.Converter) {
-      throw Error("Selected element is not a converter");
-    }
-    const requiredElement = this.getElement(inputId);
-    if (
-      requiredElement?.type === ElementType.Gate ||
-      requiredElement?.type === ElementType.Edge
-    ) {
-      throw Error(
-        "Cannot use `Gate` or `Edge` as input. Use `Pool` or `Converter`."
-      );
-    }
+    const converter = this.validateConverterRequiredInputPerUnit(converterId, inputId);
     if (amount > 0) {
       converter._setRequiredInputPerUnit(inputId, amount);
     } else {
       converter._deleteInput(inputId);
     }
+  }
+
+  /**
+   * Validate required element to converter.
+   *
+   * Validate whether this is a valid input element for converter.
+   * No actual change is made.
+   * @param converterId the id of the Converter.
+   * @param inputId the id of the input element.
+   *        Must be either `Pool` ot `Converter`.
+   */
+  public validateConverterRequiredInputPerUnit(
+    converterId: ElementId,
+    inputId: ElementId
+  ): Converter {
+    const converter = this.getElement(converterId);
+    if (converter === undefined || converter.type !== ElementType.Converter) {
+      throw Error("Selected element is not a converter");
+    }
+    const requiredElement = this.getElement(inputId);
+    if (requiredElement?.type === ElementType.Gate || requiredElement?.type === ElementType.Edge) {
+      throw Error("Cannot use `Gate` or `Edge` as input. Use `Pool` or `Converter`.");
+    }
+    return converter;
   }
 
   /**
