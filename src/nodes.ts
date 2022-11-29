@@ -35,8 +35,7 @@ function isValidLabel(label: Label): boolean {
 }
 
 function _checkLabelValidity(label: Label): Label {
-  if (!isValidLabel(label))
-    throw Error("`label` must follow javascript variable naming format");
+  if (!isValidLabel(label)) throw Error("`label` must follow javascript variable naming format");
   return label;
 }
 
@@ -140,7 +139,7 @@ class Pool {
     if (typeof arg === "string") {
       this.label = _checkLabelValidity(arg);
       this.action = NumericFn.fromString("x");
-      this.condition = BooleanFn.fromString("true");
+      this.condition = new BooleanFn(["true"]);
       this.state = 0;
       this.capacity = -1; // means infinite
     } else {
@@ -288,9 +287,7 @@ class Pool {
    */
   setState(state: number) {
     this.state =
-      this.capacity < 0
-        ? Math.max(0, state)
-        : Math.max(0, Math.min(this.capacity, state));
+      this.capacity < 0 ? Math.max(0, state) : Math.max(0, Math.min(this.capacity, state));
   }
 
   /**
@@ -315,8 +312,8 @@ class Pool {
   static fromJson(json: any): Pool {
     const pool = new Pool("pool");
     Object.assign(pool, json);
-    pool.condition = BooleanFn.fromString(json.condition);
-    pool.action = NumericFn.fromString(json.action);
+    pool.setCondition(json.condition);
+    pool.setAction(json.action);
     return pool;
   }
 }
@@ -428,9 +425,9 @@ class Gate {
     for (i = 0; i < weights.length; i++) {
       weights[i] += weights[i - 1] || 0;
     }
-    const random = Math.random() * weights[weights.length - 1];
+    const random = Math.random() * weights[weights.length - 1]!;
     for (i = 0; i < weights.length; i++) {
-      if (weights[i] > random) {
+      if (weights[i]! > random) {
         break;
       }
     }
@@ -524,6 +521,10 @@ class Converter {
     return this.toEdge;
   }
 
+  getCondition(): string {
+    return this.condition.toString();
+  }
+
   // label must follow valid js variable naming
   _setLabel(label: Label) {
     this.label = _checkLabelValidity(label);
@@ -559,6 +560,10 @@ class Converter {
 
   _deleteOutput() {
     this.toEdge = undefined;
+  }
+
+  setCondition(condition: string) {
+    this.condition = BooleanFn.fromString(condition);
   }
 
   /**
@@ -598,7 +603,7 @@ class Converter {
   static fromJson(json: any): Converter {
     const converter = new Converter("converter");
     Object.assign(converter, json);
-    converter.condition = BooleanFn.fromString(json.condition);
+    converter.setCondition(json.condition);
     return converter;
   }
 
