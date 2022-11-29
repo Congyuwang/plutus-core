@@ -176,6 +176,14 @@ class Graph {
     return this.elements[id];
   }
 
+  public getIdByLabel(label: Label): ElementId | undefined {
+    return this.labels[label];
+  }
+
+  public getLabelById(id: ElementId): Label | undefined {
+    return this.elements[id]?.getLabel();
+  }
+
   public getElementByLabel(label: Label): Element | undefined {
     const id = this.labels[label];
     if (id === undefined) return undefined;
