@@ -309,6 +309,15 @@ class Graph {
     edgeId: ElementId,
     weight: number = DEFAULT_WEIGHT
   ) {
+    const gate = this.validateGateOutputWeight(gateId, edgeId);
+    gate._setOutput(edgeId, Math.max(0, weight));
+  }
+
+  public validateGateOutputWeight(
+    gateId: ElementId,
+    edgeId: ElementId,
+    weight: number = DEFAULT_WEIGHT
+  ): Gate {
     const gate = this.getElement(gateId);
     if (gate === undefined || gate.type !== ElementType.Gate) {
       throw Error("Selected element is not a gate");
@@ -320,7 +329,10 @@ class Graph {
     if (!(edgeId in gate._getOutputs())) {
       throw Error("the output edge is not connected to this gate");
     }
-    gate._setOutput(edgeId, Math.max(0, weight));
+    if (weight < 0) {
+      throw Error("output weight must be >= 0");
+    }
+    return gate;
   }
 
   /**
