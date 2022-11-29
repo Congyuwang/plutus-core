@@ -5,7 +5,6 @@ type Node = Pool | Gate | Converter;
 type Element = Node | Edge;
 type ElementId = string;
 type Label = string;
-type Weight = number;
 
 /**
  * Pool, Gate, Converter types
@@ -322,7 +321,7 @@ class Gate {
   private label: Label;
   private fromEdge?: ElementId;
   private selectedToEdge?: ElementId;
-  private readonly toEdges: { [key: ElementId]: Weight };
+  private readonly toEdges: { [key: ElementId]: number };
 
   constructor(arg: Label | Gate) {
     if (typeof arg === "string") {
@@ -354,7 +353,7 @@ class Gate {
   /**
    * Get all output and their weights
    */
-  _getOutputs(): { [key: ElementId]: Weight } {
+  _getOutputs(): { [key: ElementId]: number } {
     return this.toEdges;
   }
 
@@ -371,7 +370,7 @@ class Gate {
   }
 
   // add another output or update weight of a certain output
-  _setOutput(edgeId: ElementId, weight: Weight) {
+  _setOutput(edgeId: ElementId, weight: number) {
     if (weight < 0) {
       throw Error("output weight must be >= 0");
     }
