@@ -49,6 +49,7 @@ class Edge {
   readonly type = ElementType.Edge;
   readonly fromNode: ElementId;
   readonly toNode: ElementId;
+  private condition: BooleanFn;
   private label: Label;
   private rate: number;
 
@@ -69,6 +70,7 @@ class Edge {
     this.label = _checkLabelValidity(label);
     this.fromNode = fromNode;
     this.toNode = toNode;
+    this.condition = new BooleanFn(["true"]);
     this.rate = rate >= 0 ? rate : -1;
   }
 
@@ -78,6 +80,14 @@ class Edge {
 
   getRate(): number {
     return this.rate;
+  }
+
+  getCondition(): string {
+    return this.condition.toString();
+  }
+
+  evaluateCondition(scope: VariableScope): boolean {
+    return this.condition.evaluate(scope);
   }
 
   // label must follow valid js variable naming, else throw Error
@@ -94,6 +104,10 @@ class Edge {
     this.rate = rate >= 0 ? rate : -1;
   }
 
+  setCondition(condition: string) {
+    this.condition = BooleanFn.fromString(condition);
+  }
+
   isUnlimited(): boolean {
     return this.rate < 0;
   }
@@ -102,9 +116,10 @@ class Edge {
     return new Edge(this.label, this.fromNode, this.toNode, this.rate);
   }
 
-  static fromJson(json: object): Edge {
+  static fromJson(json: any): Edge {
     const edge = new Edge("edge", "", "", 0);
     Object.assign(edge, json);
+    edge.setCondition(json.condition);
     return edge;
   }
 }
@@ -320,16 +335,19 @@ class Gate {
   readonly type = ElementType.Gate;
   private label: Label;
   private fromEdge?: ElementId;
+  private condition: BooleanFn;
   private selectedToEdge?: ElementId;
   private readonly toEdges: { [key: ElementId]: number };
 
   constructor(arg: Label | Gate) {
     if (typeof arg === "string") {
       this.toEdges = {};
+      this.condition = new BooleanFn(["true"]);
       this.label = _checkLabelValidity(arg);
     } else {
       this.label = arg.label;
       this.fromEdge = arg.fromEdge;
+      this.condition = BooleanFn.fromString(arg.condition.toString());
       this.selectedToEdge = arg.selectedToEdge;
       this.toEdges = { ...arg.toEdges };
     }
@@ -337,6 +355,18 @@ class Gate {
 
   getLabel(): Label {
     return this.label;
+  }
+
+  getCondition(): string {
+    return this.condition.toString();
+  }
+
+  setCondition(condition: string) {
+    this.condition = BooleanFn.fromString(condition);
+  }
+
+  evaluateCondition(scope: VariableScope): boolean {
+    return this.condition.evaluate(scope);
   }
 
   _getInput(): ElementId | undefined {
@@ -419,6 +449,7 @@ class Gate {
   static fromJson(json: any): Gate {
     const gate = new Gate("gate");
     Object.assign(gate, json);
+    gate.setCondition(json.condition);
     return gate;
   }
 }
