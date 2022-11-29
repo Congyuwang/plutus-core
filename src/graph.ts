@@ -5,12 +5,13 @@ import {
   ElementId,
   ElementType,
   Gate,
+  isValidLabel,
   Label,
   Node,
   NodeType,
   Pool,
 } from "./nodes";
-import { VariableScope } from "./formula";
+import { VariableScope, math } from "./formula";
 import { compileGraph, ConverterGroupTypes } from "./compiler";
 import nextTick from "./executor";
 
@@ -236,9 +237,9 @@ class Graph {
     if (label in this.labels) {
       throw new Error(`label '${label}' already exists`);
     }
-    delete this.labels[e.getLabel()];
-    e._setLabel(label);
-    this.labels[label] = id;
+    if (!isValidLabel(label)) {
+      throw Error("`label` must follow javascript variable naming format");
+    }
     return e;
   }
 
