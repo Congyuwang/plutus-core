@@ -1,17 +1,7 @@
+import { BooleanFn, NumericFn } from "./formula";
 import { Graph } from "./graph";
-import {
-  Pool,
-  Gate,
-  Edge,
-  Converter,
-  NodeType,
-  Node,
-  isValidLabel,
-  ElementType,
-  Element,
-  ElementId,
-  Label,
-} from "./nodes";
+import { Pool, Gate, Edge, Converter, NodeType, isValidLabel, ElementType } from "./nodes";
+import type { Node, Element, ElementId, Label } from "./nodes";
 
 export {
   Graph,
@@ -26,4 +16,6 @@ export {
   Label,
   ElementType,
   Element,
+  NumericFn,
+  BooleanFn,
 };
