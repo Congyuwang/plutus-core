@@ -7,7 +7,6 @@ import {
   OrderedConverterGroups,
   ConverterGroupTypes,
 } from "./compiler";
-import assert from "assert";
 
 export type Packet = {
   from: ElementId;
@@ -237,7 +236,9 @@ export function writeToGraph(
     const e = graph.getElement(id);
     switch (e?.type) {
       case ElementType.Pool:
-        assert(packets.length == 1);
+        if (packets.length !== 1) {
+          throw Error("must have exactly one packet to Pool");
+        }
         e._addToPool(packets[0]!.value);
         break;
       case ElementType.Converter:
