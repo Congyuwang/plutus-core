@@ -89,6 +89,7 @@ class Graph {
    * @param rate default to 0, negative means unlimited.
    * @param label (optional) a globally unique label.
    *        If missing, use automatic labelling.
+   * @return the newly created edge
    */
   public addEdge(
     edgeId: ElementId,
@@ -96,7 +97,7 @@ class Graph {
     toId: ElementId,
     rate: number = 0,
     label?: Label
-  ) {
+  ): Edge {
     const from = this.getElement(fromId);
     const to = this.getElement(toId);
     const labelName =
@@ -114,8 +115,10 @@ class Graph {
     this.setNodeOutputToEdge(from, edgeId);
     // to.input = edge
     this.setNodeInputToEdge(to, edgeId);
-    this.elements[edgeId] = new Edge(labelName, fromId, toId, rate);
+    const edge = new Edge(labelName, fromId, toId, rate);
+    this.elements[edgeId] = edge;
     this.labels[labelName] = edgeId;
+    return edge;
   }
 
   /**
