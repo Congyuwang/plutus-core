@@ -86,7 +86,7 @@ class Graph {
    * @param edgeId the id of the edge, must be different from existing ids
    * @param fromId from which Node
    * @param toId to which Node
-   * @param rate default to 0, negative means unlimited.
+   * @param rate default to 1, negative means unlimited.
    * @param label (optional) a globally unique label.
    *        If missing, use automatic labelling.
    * @return the newly created edge
@@ -95,13 +95,12 @@ class Graph {
     edgeId: ElementId,
     fromId: ElementId,
     toId: ElementId,
-    rate: number = 0,
+    rate = DEFAULT_EDGE_RATE,
     label?: Label
   ): Edge {
     const from = this.getElement(fromId);
     const to = this.getElement(toId);
-    const labelName =
-      label !== undefined ? label : this.autoLabel(ElementType.Edge);
+    const labelName = label !== undefined ? label : this.autoLabel(ElementType.Edge);
     if (from === undefined || to === undefined) {
       throw Error("connecting Node with non-existing id");
     }

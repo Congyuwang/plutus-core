@@ -5,13 +5,11 @@ describe("test graph functionality", () => {
     const graph = new Graph();
     graph.addNode(NodeType.Pool, "p-0");
     graph.addNode(NodeType.Pool, "p-1");
-    expect(() => graph.addNode(NodeType.Pool, "p-0")).toThrow(
-      Error("id already exists")
-    );
+    expect(() => graph.addNode(NodeType.Pool, "p-0")).toThrow(Error("id already exists"));
     graph.setLabel("p-1", "pool$custom");
     expect(graph.getElement("p-0")?.getLabel()).toEqual("pool$0");
     expect(graph.getElement("p-1")?.getLabel()).toEqual("pool$custom");
-    graph.deleteElement("p-1");
+    expect(graph.deleteElement("p-1")).toEqual(["p-1"]);
     graph.addNode(NodeType.Pool, "p-2");
     graph.addNode(NodeType.Converter, "c-0");
     expect(graph.getElement("p-2")?.getLabel()).toEqual("pool$2");
@@ -54,9 +52,7 @@ describe("test graph functionality", () => {
     graph.addEdge("e-1", "p-1", "p-2");
     graph.addEdge("e-2", "p-2", "p-3");
     graph.addEdge("e-3", "p-3", "p-0");
-    expect(() => graph.addEdge("e-3", "p-3", "p-0")).toThrow(
-      Error("edge id already exists")
-    );
+    expect(() => graph.addEdge("e-3", "p-3", "p-0")).toThrow(Error("edge id already exists"));
     expect(() => graph.addEdge("e-4", "p-5", "p-0")).toThrow(
       Error("connecting Node with non-existing id")
     );
@@ -84,7 +80,7 @@ describe("test graph functionality", () => {
     expect(Object.keys(graph.labels).length).toEqual(8);
 
     // p3 -> p0 -> p1 -> p2
-    graph.deleteElement("e-2");
+    expect(graph.deleteElement("e-2")).toEqual(["e-2"]);
     if (p2?.type === ElementType.Pool) {
       expect(p2._getInput()).toEqual("e-1");
       expect(p2._getOutput()).toBeUndefined();
@@ -97,7 +93,7 @@ describe("test graph functionality", () => {
     expect(Object.keys(graph.labels).length).toEqual(7);
 
     // p3    p1 -> p2
-    graph.deleteElement("p-0");
+    expect(new Set(graph.deleteElement("p-0"))).toEqual(new Set(["e-4", "e-0", "p-0"]));
     if (p1?.type === ElementType.Pool) {
       expect(p1._getInput()).toBeUndefined();
       expect(p1._getOutput()).toEqual("e-1");
@@ -132,7 +128,7 @@ describe("test graph functionality", () => {
     expect(Object.keys(graph.labels).length).toEqual(4);
 
     // p3    p2
-    graph.deleteElement("p-1");
+    expect(new Set(graph.deleteElement("p-1"))).toEqual(new Set(["p-1", "e-3"]));
     if (p2?.type === ElementType.Pool) {
       expect(p2._getInput()).toBeUndefined();
       expect(p2._getOutput()).toBeUndefined();
@@ -183,9 +179,7 @@ describe("test graph functionality", () => {
     graph.addEdge("e-5", "g-0", "p-2");
     graph.addEdge("e-6", "p-2", "c-0");
     if (c0?.type === ElementType.Converter) {
-      expect(new Set(Object.keys(c0._getInputs()))).toEqual(
-        new Set(["e-1", "e-6"])
-      );
+      expect(new Set(Object.keys(c0._getInputs()))).toEqual(new Set(["e-1", "e-6"]));
       expect(c0._getOutput()).toEqual("e-2");
     }
     if (g0?.type === ElementType.Gate) {
@@ -208,9 +202,7 @@ describe("test graph functionality", () => {
     // +----------<------+
     graph.addEdge("e-7", "g-0", "c-0");
     if (c0?.type === ElementType.Converter) {
-      expect(new Set(Object.keys(c0._getInputs()))).toEqual(
-        new Set(["e-1", "e-6", "e-7"])
-      );
+      expect(new Set(Object.keys(c0._getInputs()))).toEqual(new Set(["e-1", "e-6", "e-7"]));
       expect(c0._getOutput()).toEqual("e-2");
     }
     if (g0?.type === ElementType.Gate) {
@@ -234,9 +226,7 @@ describe("test graph functionality", () => {
     // +----------<------+
     graph.addEdge("e-8", "p-1", "p-2");
     if (c0?.type === ElementType.Converter) {
-      expect(new Set(Object.keys(c0._getInputs()))).toEqual(
-        new Set(["e-6", "e-7"])
-      );
+      expect(new Set(Object.keys(c0._getInputs()))).toEqual(new Set(["e-6", "e-7"]));
       expect(c0._getOutput()).toEqual("e-2");
     }
     if (g0?.type === ElementType.Gate) {
@@ -259,9 +249,7 @@ describe("test graph functionality", () => {
     // +----------<------+
     graph.addEdge("e-9", "p-3", "p-0");
     if (c0?.type === ElementType.Converter) {
-      expect(new Set(Object.keys(c0._getInputs()))).toEqual(
-        new Set(["e-6", "e-7"])
-      );
+      expect(new Set(Object.keys(c0._getInputs()))).toEqual(new Set(["e-6", "e-7"]));
       expect(c0._getOutput()).toEqual("e-2");
     }
     if (g0?.type === ElementType.Gate) {
@@ -272,7 +260,7 @@ describe("test graph functionality", () => {
     expect(Object.keys(graph.labels).length).toEqual(12);
 
     // p3--->p0--->p1--->p2    g0
-    graph.deleteElement("c-0");
+    expect(new Set(graph.deleteElement("c-0"))).toEqual(new Set(["c-0", "e-6", "e-2", "e-7"]));
     if (g0?.type === ElementType.Gate) {
       expect(g0._getInput()).toBeUndefined();
       expect(g0._getOutputs()).toEqual({});
@@ -300,12 +288,12 @@ describe("test graph functionality", () => {
     expect(Object.keys(graph.labels).length).toEqual(10);
 
     // p3--->p0     p1     g0
-    graph.deleteElement("p-2");
+    expect(new Set(graph.deleteElement("p-2"))).toEqual(new Set(["p-2", "e-8"]));
     expect(Object.keys(graph.elements).length).toEqual(8);
     expect(Object.keys(graph.labels).length).toEqual(8);
 
     // p3--->p0    p1
-    graph.deleteElement("g-0");
+    expect(new Set(graph.deleteElement("g-0"))).toEqual(new Set(["g-0", "e-13", "e-12", "e-11"]));
     expect(Object.keys(graph.elements).length).toEqual(4);
     expect(Object.keys(graph.labels).length).toEqual(4);
   });

@@ -52,15 +52,9 @@ describe("test simple cases", () => {
     let p2State = 10;
     for (let i = 0; i < 8; i++) {
       graph.nextTick();
-      expect((<Pool>graph.getElement("p0")).getState()).toEqual(
-        (p0State = p0State - 1 + 3)
-      );
-      expect((<Pool>graph.getElement("p1")).getState()).toEqual(
-        (p1State = p1State - 2 + 1)
-      );
-      expect((<Pool>graph.getElement("p2")).getState()).toEqual(
-        (p2State = p2State - 3 + 2)
-      );
+      expect((<Pool>graph.getElement("p0")).getState()).toEqual((p0State = p0State - 1 + 3));
+      expect((<Pool>graph.getElement("p1")).getState()).toEqual((p1State = p1State - 2 + 1));
+      expect((<Pool>graph.getElement("p2")).getState()).toEqual((p2State = p2State - 3 + 2));
     }
     graph.nextTick();
     expect((<Pool>graph.getElement("p0")).getState()).toEqual(
