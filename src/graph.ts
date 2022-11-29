@@ -354,49 +354,61 @@ class Graph {
    * When deleting a node, also delete all associated edges to that node,
    * and unset all related input / output linking fields of those edges.
    *
-   * @param id
+   * @param id element deleted
+   * @return ids of elements removed
    */
-  public deleteElement(id: ElementId) {
+  public deleteElement(id: ElementId): ElementId[] {
+    const deleted: ElementId[] = [];
+    this.deleteElementInner(id, deleted);
+    return deleted;
+  }
+
+  private deleteElementInner(id: ElementId, deleted: ElementId[]) {
     const e = this.elements[id];
     if (e === undefined) return;
     switch (e.type) {
-      case ElementType.Pool:
+      case ElementType.Pool: {
         const poolInputEdge = e._getInput();
         if (poolInputEdge !== undefined) {
-          this.deleteElement(poolInputEdge);
+          this.deleteElementInner(poolInputEdge, deleted);
         }
         const poolOutputEdge = e._getOutput();
         if (poolOutputEdge !== undefined) {
-          this.deleteElement(poolOutputEdge);
+          this.deleteElementInner(poolOutputEdge, deleted);
         }
         break;
-      case ElementType.Converter:
+      }
+      case ElementType.Converter: {
         const converterOutputEdge = e._getOutput();
         if (converterOutputEdge !== undefined) {
-          this.deleteElement(converterOutputEdge);
+          this.deleteElementInner(converterOutputEdge, deleted);
         }
         const converterInputEdges = e._getInputs();
         Object.keys(converterInputEdges).forEach(edgeId =>
-          this.deleteElement(edgeId)
+          this.deleteElementInner(edgeId, deleted)
         );
         break;
-      case ElementType.Gate:
+      }
+      case ElementType.Gate: {
         const gateInputEdge = e._getInput();
         if (gateInputEdge !== undefined) {
-          this.deleteElement(gateInputEdge);
+          this.deleteElementInner(gateInputEdge, deleted);
         }
         const gateOutputEdges = Object.keys(e._getOutputs());
         for (const edgeId of gateOutputEdges) {
-          this.deleteElement(edgeId);
+          this.deleteElementInner(edgeId, deleted);
         }
         break;
-      case ElementType.Edge:
+      }
+      case ElementType.Edge: {
         const from = this.getElement(e.fromNode);
         const to = this.getElement(e.toNode);
         if (from !== undefined) Graph.deleteNodeOutput(from, id);
         if (to !== undefined) Graph.deleteNodeInput(to, id);
         break;
+      }
     }
+    deleted.push(id);
     delete this.elements[id];
     delete this.labels[e.getLabel()];
   }
