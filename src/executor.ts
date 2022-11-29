@@ -156,6 +156,9 @@ function runEdge(
   const edge = graph.getElement(edgeId);
   if (edge?.type !== ElementType.Edge) return; // never happens
 
+  // evaluate edge condition
+  if (!edge.evaluateCondition(graph.variableScope())) return;
+
   // source
   let nextPacket: Packet = {
     from: edge.fromNode,
@@ -181,6 +184,9 @@ function runEdge(
     case ElementType.Gate: {
       if (packet === undefined) {
         // nothing to forward, end recursion
+        return;
+      } else if (!fromElement.evaluateCondition(graph.variableScope())) {
+        // gate condition does not evaluate to true
         return;
       } else {
         // forwarding with possible loss
