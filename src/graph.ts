@@ -481,12 +481,14 @@ class Graph {
   // node.output = edge.from
   private setNodeOutputToEdge(from: Element, edgeId: ElementId) {
     switch (from.type) {
-      case ElementType.Edge:
+      case ElementType.Edge: {
         throw Error("edge must not start from `Edge`");
-      case ElementType.Gate:
+      }
+      case ElementType.Gate: {
         from._setOutput(edgeId, DEFAULT_WEIGHT);
         break;
-      default:
+      }
+      default: {
         // delete current output edge if Pool, Converter
         const currentOutputEdge = from._getOutput();
         if (currentOutputEdge !== undefined) {
@@ -494,16 +496,18 @@ class Graph {
         }
         from._setOutput(edgeId);
         break;
+      }
     }
   }
 
   // node.input = edge.to
   private setNodeInputToEdge(to: Element, edgeId: ElementId) {
     switch (to.type) {
-      case ElementType.Edge:
+      case ElementType.Edge: {
         throw Error("edge must not point to `Edge`");
+      }
       case ElementType.Pool:
-      case ElementType.Gate:
+      case ElementType.Gate: {
         const currentOutputEdge = to._getInput();
         // delete current input edge if Pool, Gate
         if (currentOutputEdge !== undefined) {
@@ -511,9 +515,11 @@ class Graph {
         }
         to._setInput(edgeId);
         break;
-      case ElementType.Converter:
+      }
+      case ElementType.Converter: {
         to._setInput(edgeId);
         break;
+      }
     }
   }
 
@@ -521,9 +527,7 @@ class Graph {
   private static deleteNodeOutput(from: Element, edgeId: ElementId) {
     switch (from.type) {
       case ElementType.Edge:
-        throw Error(
-          "cannot delete output of edge (edge-edge connection not allowed)"
-        );
+        throw Error("cannot delete output of edge (edge-edge connection not allowed)");
       case ElementType.Gate:
         from._deleteOutput(edgeId);
         break;
@@ -537,9 +541,7 @@ class Graph {
   private static deleteNodeInput(to: Element, edgeId: ElementId) {
     switch (to.type) {
       case ElementType.Edge:
-        throw Error(
-          "cannot delete output of edge (edge-edge connection not allowed)"
-        );
+        throw Error("cannot delete output of edge (edge-edge connection not allowed)");
       case ElementType.Converter:
         to._deleteInput(edgeId);
         break;

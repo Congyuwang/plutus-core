@@ -31,10 +31,7 @@ export type CyclicConverterGroups = {
  * @param graph the Graph object.
  * @param isCheckMode whether this run is for checking Graph
  */
-export function compileGraph(
-  graph: Graph,
-  isCheckMode: boolean = false
-): CompiledGraph {
+export function compileGraph(graph: Graph, isCheckMode = false): CompiledGraph {
   const activeGraphElements = activatePoolsAndGates(graph, isCheckMode);
   const compiledGraph: CompiledGraph = [];
   const poolGroups = cutAtPoolInput(activeGraphElements, isCheckMode);
@@ -54,7 +51,7 @@ export function compileGraph(
  */
 export function activatePoolsAndGates(
   graph: Graph,
-  checkMode: boolean = false
+  checkMode = false
 ): { [key: ElementId]: Element } {
   const disabled: Set<ElementId> = new Set();
   for (const e of Object.values(graph.elements)) {
@@ -72,7 +69,7 @@ export function activatePoolsAndGates(
         } else {
           Object.entries(e._getOutputs())
             .filter(([, weight]) => weight <= 0)
-            .forEach(([id]) => disabled.add(id));
+            .forEach(([id, _]) => disabled.add(id));
         }
         break;
     }
@@ -96,20 +93,13 @@ export function activatePoolsAndGates(
  */
 export function cutAtPoolInput(
   graphElements: { [key: ElementId]: Element },
-  isCheckMode: boolean = false
+  isCheckMode = false
 ): { [key: ElementId]: Element }[] {
   const visited: Set<ElementId> = new Set();
   const groups: { [key: ElementId]: Element }[] = [];
   for (const id of Object.keys(graphElements)) {
     if (visited.has(id)) continue;
-    const newGroup = buildGroup(
-      graphElements,
-      id,
-      true,
-      false,
-      isCheckMode,
-      visited
-    );
+    const newGroup = buildGroup(graphElements, id, true, false, isCheckMode, visited);
     groups.push(newGroup);
   }
   return groups;
@@ -124,20 +114,13 @@ export function cutAtPoolInput(
  */
 export function cutAtConverterInput(
   graphElements: { [key: ElementId]: Element },
-  isCheckMode: boolean = false
+  isCheckMode = false
 ): { [key: ElementId]: Element }[] {
   const visited: Set<ElementId> = new Set();
   const groups: { [key: ElementId]: Element }[] = [];
   for (const id of Object.keys(graphElements)) {
     if (visited.has(id)) continue;
-    const newGroup = buildGroup(
-      graphElements,
-      id,
-      true,
-      true,
-      isCheckMode,
-      visited
-    );
+    const newGroup = buildGroup(graphElements, id, true, true, isCheckMode, visited);
     groups.push(newGroup);
   }
   return groups;
@@ -194,9 +177,7 @@ export function computeSubGroupOrders(
   }
   for (const [groupId, converterId] of Object.entries(groupToConverter)) {
     const dependentGroup = converterToGroup[converterId];
-    if (dependentGroup !== undefined) {
-      directedGraph.mergeEdge(groupId, dependentGroup);
-    }
+    directedGraph.mergeEdge(groupId, dependentGroup);
   }
   if (hasCycle(directedGraph)) {
     return {
@@ -304,7 +285,7 @@ function getNeighborsOf(
   element: Element,
   cutAtPoolInput: boolean,
   cutAtConverterOutput: boolean,
-  isCheckMode: boolean = false
+  isCheckMode = false
 ): ElementId[] {
   const neighbors: ElementId[] = [];
   switch (element.type) {

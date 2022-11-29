@@ -88,9 +88,7 @@ describe("test Gate", () => {
     gate._setOutput("6", 10);
     gate._deleteOutput("6");
     expect(gate._getOutputs()).toEqual(weightMap);
-    expect(() => gate._setOutput("bad-weight", -1)).toThrow(
-      Error("output weight must be >= 0")
-    );
+    expect(() => gate._setOutput("bad-weight", -1)).toThrow(Error("output weight must be >= 0"));
 
     // test distributions p-value of Chi-Squared > 0.05
     const stats: { [key: string]: number } = {};
@@ -99,12 +97,10 @@ describe("test Gate", () => {
     }
     const ROUND = 100000;
     const sumOfWeights = sum(Object.values(weightMap));
-    const expected = Object.values(weightMap).map(
-      w => (w * ROUND) / sumOfWeights
-    );
+    const expected = Object.values(weightMap).map(w => (w * ROUND) / sumOfWeights);
     for (let i = 0; i < ROUND; i++) {
       const selected = gate._randomSelect();
-      stats[selected!] = stats[selected!] + 1;
+      stats[selected!] = stats[selected!]! + 1;
     }
     const { pValue } = gof([...Object.values(stats)], expected);
     expect(pValue).toBeGreaterThan(0.05);
@@ -114,7 +110,7 @@ describe("test Gate", () => {
 describe("test Edge", () => {
   test("test Edge Operations", () => {
     const edge = new Edge("edge0", "n0", "n1");
-    expect(edge.getRate()).toEqual(0);
+    expect(edge.getRate()).toEqual(1);
     edge.setRate(2);
     expect(edge.getRate()).toEqual(2);
     edge.setRate(-2);
@@ -130,9 +126,7 @@ describe("test Converter", () => {
     converter._setInput("3");
     converter._setInput("4");
     converter._deleteInput("2");
-    expect(new Set(Object.keys(converter._getInputs()))).toEqual(
-      new Set(["1", "3", "4"])
-    );
+    expect(new Set(Object.keys(converter._getInputs()))).toEqual(new Set(["1", "3", "4"]));
     // test output operations
     expect(converter._getOutput()).toBeUndefined();
     converter._setOutput("10");

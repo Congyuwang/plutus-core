@@ -1,4 +1,4 @@
-import { all, BigNumber, create, EvalFunction, MathExpression } from "mathjs";
+import { all, create, EvalFunction, MathExpression } from "mathjs";
 
 const math = create(all, {
   number: "BigNumber",

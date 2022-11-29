@@ -36,7 +36,7 @@ function executeCompiledGraph(
   graph: Graph,
   compiledGraph: CompiledGraph
 ): { [key: ElementId]: Packet[] } {
-  let allOutputs: { [key: ElementId]: Packet[] } = {};
+  const allOutputs: { [key: ElementId]: Packet[] } = {};
   for (const group of compiledGraph) {
     switch (group.type) {
       case ConverterGroupTypes.Cyclic: {
@@ -66,15 +66,14 @@ function executeOrderedSubgroup(
   graph: Graph,
   orderedSubgroups: OrderedConverterGroups
 ): { [key: ElementId]: Packet[] } {
-  let allOutputs: { [key: ElementId]: Packet[] } = {};
+  const allOutputs: { [key: ElementId]: Packet[] } = {};
   for (const i of orderedSubgroups.groupExecutionOrder) {
-    const subgraph = orderedSubgroups.groups[i];
+    const subgraph = orderedSubgroups.groups[i]!;
     const entryPoints = orderedSubgroups.entryPointsToGroup[i];
     const outputs = executeSubgroup(graph, entryPoints);
 
     const converterId = orderedSubgroups.converterOfGroup[i];
-    const converter =
-      converterId !== undefined ? subgraph[converterId] : undefined;
+    const converter = converterId !== undefined ? subgraph[converterId] : undefined;
     for (const [id, packets] of Object.entries(outputs)) {
       if (
         converter !== undefined &&
@@ -111,7 +110,7 @@ function executeCyclicSubgroup(
   graph: Graph,
   cyclicSubgroup: CyclicConverterGroups
 ): { [key: ElementId]: Packet[] } {
-  let allOutputs: { [key: ElementId]: Packet[] } = {};
+  const allOutputs: { [key: ElementId]: Packet[] } = {};
   for (const entryPoints of Object.values(cyclicSubgroup.entryPointsToGroup)) {
     const outputs = executeSubgroup(graph, entryPoints);
     mergeOutputs(allOutputs, outputs);
@@ -159,7 +158,7 @@ function runEdge(
   if (!edge.evaluateCondition(graph.variableScope())) return;
 
   // source
-  let nextPacket: Packet = {
+  const nextPacket: Packet = {
     from: edge.fromNode,
     value: 0,
   };
@@ -228,10 +227,7 @@ function runEdge(
  * @param graph the graph object
  * @param allOutputs outputs collected from all subgraph.
  */
-export function writeToGraph(
-  graph: Graph,
-  allOutputs: { [key: ElementId]: Packet[] }
-) {
+export function writeToGraph(graph: Graph, allOutputs: { [key: ElementId]: Packet[] }) {
   for (const [id, packets] of Object.entries(allOutputs)) {
     const e = graph.getElement(id);
     switch (e?.type) {
