@@ -59,14 +59,9 @@ class Edge {
    * @param label globally unique edge label
    * @param fromNode from which Node
    * @param toNode to which Node
-   * @param rate default to 0, negative means unlimited rate.
+   * @param rate default to 1, negative means unlimited rate.
    */
-  constructor(
-    label: Label,
-    fromNode: ElementId,
-    toNode: ElementId,
-    rate: number = 0
-  ) {
+  constructor(label: Label, fromNode: ElementId, toNode: ElementId, rate = 1) {
     this.label = _checkLabelValidity(label);
     this.fromNode = fromNode;
     this.toNode = toNode;

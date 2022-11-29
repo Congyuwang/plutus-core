@@ -15,6 +15,7 @@ import { compileGraph, ConverterGroupTypes } from "./compiler";
 import nextTick from "./executor";
 
 export const DEFAULT_WEIGHT = 1;
+export const DEFAULT_EDGE_RATE = 1;
 
 export enum CheckResultType {
   NoError = "no error",
