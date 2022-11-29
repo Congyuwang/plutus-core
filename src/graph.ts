@@ -542,13 +542,13 @@ class GraphVariableScope implements VariableScope {
   get(label: Label): any {
     const checkLocal = this.localCache[label];
     if (checkLocal !== undefined) {
-      return checkLocal;
+      return floatToBigNumber(checkLocal);
     }
     const fromGraph = this.graph.getStateByLabel(label);
     if (fromGraph !== undefined) {
       this.localCache[label] = fromGraph;
     }
-    return fromGraph;
+    return floatToBigNumber(fromGraph);
   }
 
   // always check localCache first
@@ -569,6 +569,13 @@ class GraphVariableScope implements VariableScope {
   set(label: Label, value: any): void {
     this.localCache[label] = value;
   }
+}
+
+function floatToBigNumber(value: any) {
+  if (typeof value === "number") {
+    return math.bignumber(value);
+  }
+  return value;
 }
 
 export { Graph };
