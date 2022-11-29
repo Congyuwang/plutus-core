@@ -206,6 +206,19 @@ class Graph {
    * @param label the label of the element
    */
   public setLabel(id: ElementId, label: Label): Element {
+    // check label
+    const e = this.validateLabel(id, label);
+    delete this.labels[e.getLabel()];
+    e._setLabel(label);
+    this.labels[label] = id;
+    return e;
+  }
+
+  /**
+   * Check whether the set label operation is valid.
+   * No write operation.
+   */
+  public validateLabel(id: ElementId, label: Label): Element {
     // check that id exists
     const e = this.elements[id];
     if (e === undefined) {
