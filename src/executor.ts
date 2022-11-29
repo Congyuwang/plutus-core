@@ -84,11 +84,8 @@ function executeOrderedSubgroup(
         converter.type === ElementType.Converter
       ) {
         // write to converter if this subgroup has a converter
-        const converterOutput = outputs[converterId];
-        if (converterOutput !== undefined) {
-          for (const packet of converterOutput) {
-            converter._addToBuffer(packet.from, packet.value);
-          }
+        for (const packet of packets) {
+          converter._addToBuffer(packet.from, packet.value);
         }
       } else {
         // Otherwise, aggregate outputs
