@@ -1,15 +1,16 @@
 import { Graph } from "./graph";
-import { ElementId, ElementType } from "./nodes";
+import { ElementId, ElementType, Token } from "./nodes";
 import {
   CompiledGraph,
   compileGraph,
+  ConverterGroupTypes,
   CyclicConverterGroups,
   OrderedConverterGroups,
-  ConverterGroupTypes,
 } from "./compiler";
 
 export type Packet = {
   from: ElementId;
+  token: Token;
   value: number;
 };
 
@@ -34,7 +35,7 @@ export default function nextTick(graph: Graph) {
  */
 function executeCompiledGraph(
   graph: Graph,
-  compiledGraph: CompiledGraph
+  compiledGraph: CompiledGraph,
 ): { [key: ElementId]: Packet[] } {
   const allOutputs: { [key: ElementId]: Packet[] } = {};
   for (const group of compiledGraph) {
@@ -64,7 +65,7 @@ function executeCompiledGraph(
  */
 function executeOrderedSubgroup(
   graph: Graph,
-  orderedSubgroups: OrderedConverterGroups
+  orderedSubgroups: OrderedConverterGroups,
 ): { [key: ElementId]: Packet[] } {
   const allOutputs: { [key: ElementId]: Packet[] } = {};
   for (const i of orderedSubgroups.groupExecutionOrder) {
@@ -83,7 +84,7 @@ function executeOrderedSubgroup(
       ) {
         // write to converter if this subgroup has a converter
         for (const packet of packets) {
-          converter._addToBuffer(packet.from, packet.value);
+          converter._addToBuffer(packet.token, packet.value);
         }
       } else {
         // Otherwise, aggregate outputs
@@ -108,7 +109,7 @@ function executeOrderedSubgroup(
  */
 function executeCyclicSubgroup(
   graph: Graph,
-  cyclicSubgroup: CyclicConverterGroups
+  cyclicSubgroup: CyclicConverterGroups,
 ): { [key: ElementId]: Packet[] } {
   const allOutputs: { [key: ElementId]: Packet[] } = {};
   for (const entryPoints of Object.values(cyclicSubgroup.entryPointsToGroup)) {
@@ -124,7 +125,7 @@ function executeCyclicSubgroup(
  */
 function executeSubgroup(
   graph: Graph,
-  entryPoints: Set<ElementId> | undefined
+  entryPoints: Set<ElementId> | undefined,
 ): { [key: ElementId]: Packet[] } {
   const output: { [key: ElementId]: Packet[] } = {};
   if (entryPoints === undefined || entryPoints.size === 0) {
@@ -147,7 +148,7 @@ function runEdge(
   edgeId: ElementId,
   visited: Set<ElementId>,
   outputs: { [key: ElementId]: Packet[] },
-  packet?: Packet
+  packet?: Packet,
 ) {
   if (visited.has(edgeId)) return;
   visited.add(edgeId);
@@ -160,6 +161,7 @@ function runEdge(
   // source
   const nextPacket: Packet = {
     from: edge.fromNode,
+    token: "",
     value: 0,
   };
   const fromElement = graph.getElement(edge.fromNode);
@@ -169,14 +171,16 @@ function runEdge(
         edge.isUnlimited()
           ? fromElement.maximumConvertable(graph.variableScope()) // take all
           : edge.getRate(),
-        graph.variableScope()
+        graph.variableScope(),
       );
+      nextPacket.token = fromElement.getToken();
       break;
     }
     case ElementType.Pool: {
       nextPacket.value = edge.isUnlimited()
         ? fromElement._takeFromPool(fromElement.getState()) // take all
         : fromElement._takeFromPool(edge.getRate());
+      nextPacket.token = fromElement.getToken();
       break;
     }
     case ElementType.Gate: {
@@ -192,6 +196,21 @@ function runEdge(
           ? packet.value // lossless take all
           : Math.min(packet.value, edge.getRate());
         nextPacket.from = packet.from;
+        nextPacket.token = packet.token;
+      }
+      break;
+    }
+    case ElementType.Swap: {
+      if (packet === undefined) {
+        return;
+      } else {
+        const swap = fromElement.swap(packet.value, packet.token, graph.variableScope());
+        // if nothing swapped, end recursion
+        if (swap === undefined) return;
+        const [token, amount] = swap;
+        nextPacket.from = packet.from;
+        nextPacket.token = token;
+        nextPacket.value = amount;
       }
       break;
     }
@@ -239,7 +258,7 @@ export function writeToGraph(graph: Graph, allOutputs: { [key: ElementId]: Packe
         break;
       case ElementType.Converter:
         for (const packet of packets) {
-          e._addToBuffer(packet.from, packet.value);
+          e._addToBuffer(packet.token, packet.value);
         }
         break;
     }
@@ -248,7 +267,7 @@ export function writeToGraph(graph: Graph, allOutputs: { [key: ElementId]: Packe
 
 export function mergeOutputs(
   to: { [key: ElementId]: Packet[] },
-  from: { [key: ElementId]: Packet[] }
+  from: { [key: ElementId]: Packet[] },
 ) {
   for (const [id, packets] of Object.entries(from)) {
     if (!(id in to)) {

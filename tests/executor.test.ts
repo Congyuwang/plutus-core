@@ -59,33 +59,33 @@ describe("test simple cases", () => {
     graph.nextTick();
     expect((<Pool>graph.getElement("p0")).getState()).toEqual(
       // 26
-      (p0State = p0State - 1 + 2)
+      (p0State = p0State - 1 + 2),
       // 27
     );
     expect((<Pool>graph.getElement("p1")).getState()).toEqual(
       // 2
-      (p1State = p1State - 2 + 1)
+      (p1State = p1State - 2 + 1),
       // 1
     );
     expect((<Pool>graph.getElement("p2")).getState()).toEqual(
       // 2
-      (p2State = p2State - 2 + 2)
+      (p2State = p2State - 2 + 2),
       // 2
     );
     graph.nextTick();
     expect((<Pool>graph.getElement("p0")).getState()).toEqual(
       // 27
-      (p0State = p0State - 1 + 2)
+      (p0State = p0State - 1 + 2),
       // 28
     );
     expect((<Pool>graph.getElement("p1")).getState()).toEqual(
       // 1
-      (p1State = p1State - 1 + 1)
+      (p1State = p1State - 1 + 1),
       // 1
     );
     expect((<Pool>graph.getElement("p2")).getState()).toEqual(
       // 2
-      (p2State = p2State - 2 + 1)
+      (p2State = p2State - 2 + 1),
       // 1
     );
     for (let i = 0; i < 5; i++) {
@@ -106,34 +106,34 @@ describe("test simple cases", () => {
     expect((<Pool>graph.getElement("p0")).getState()).toEqual(4);
     expect((<Pool>graph.getElement("p1")).getState()).toEqual(8);
     expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual({
-      p0: 2,
-      p1: 3,
+      p0_token: 2,
+      p1_token: 3,
     });
     graph.nextTick();
     expect((<Pool>graph.getElement("p0")).getState()).toEqual(0);
     expect((<Pool>graph.getElement("p1")).getState()).toEqual(4);
     expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual({
-      p0: 4,
-      p1: 6,
+      p0_token: 4,
+      p1_token: 6,
     });
     graph.nextTick();
     expect((<Pool>graph.getElement("p0")).getState()).toEqual(0);
     expect((<Pool>graph.getElement("p1")).getState()).toEqual(0);
     expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual({
-      p0: 2,
-      p1: 9,
+      p0_token: 2,
+      p1_token: 9,
     });
     graph.nextTick();
     expect((<Pool>graph.getElement("p0")).getState()).toEqual(0);
     expect((<Pool>graph.getElement("p1")).getState()).toEqual(0);
     expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual({
-      p0: 0,
-      p1: 8,
+      p0_token: 0,
+      p1_token: 8,
     });
     graph.nextTick();
     expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual({
-      p0: 0,
-      p1: 8,
+      p0_token: 0,
+      p1_token: 8,
     });
   });
 
@@ -147,94 +147,94 @@ describe("test simple cases", () => {
     expect((<Pool>graph.getElement("p1")).getState()).toEqual(8);
     expect((<Pool>graph.getElement("p0")).getState()).toEqual(5);
     expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual({
-      p0: 2,
-      p1: 3,
+      p0_token: 2,
+      p1_token: 3,
     });
     graph.nextTick();
     expect((<Pool>graph.getElement("p1")).getState()).toEqual(4);
     expect((<Pool>graph.getElement("p0")).getState()).toEqual(2);
     expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual({
-      p0: 4,
-      p1: 6,
+      p0_token: 4,
+      p1_token: 6,
     });
     graph.nextTick();
     expect((<Pool>graph.getElement("p0")).getState()).toEqual(1);
     expect((<Pool>graph.getElement("p1")).getState()).toEqual(0);
     expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual({
-      p0: 4,
-      p1: 9,
+      p0_token: 4,
+      p1_token: 9,
     });
     graph.nextTick();
     expect((<Pool>graph.getElement("p0")).getState()).toEqual(1);
     expect((<Pool>graph.getElement("p1")).getState()).toEqual(0);
     expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual({
-      p0: 3,
-      p1: 8,
+      p0_token: 3,
+      p1_token: 8,
     });
     graph.nextTick();
     expect((<Pool>graph.getElement("p0")).getState()).toEqual(1);
     expect((<Pool>graph.getElement("p1")).getState()).toEqual(0);
     expect((<Converter>graph.getElement("c0")).getBuffer()).toEqual({
-      p0: 2,
-      p1: 7,
+      p0_token: 2,
+      p1_token: 7,
     });
     const graphClone = graph.clone();
     graphClone.nextTick();
     expect((<Pool>graphClone.getElement("p0")).getState()).toEqual(1);
     expect((<Pool>graphClone.getElement("p1")).getState()).toEqual(0);
     expect((<Converter>graphClone.getElement("c0")).getBuffer()).toEqual({
-      p0: 1,
-      p1: 6,
+      p0_token: 1,
+      p1_token: 6,
     });
     graphClone.nextTick();
     expect((<Pool>graphClone.getElement("p0")).getState()).toEqual(1);
     expect((<Pool>graphClone.getElement("p1")).getState()).toEqual(0);
     expect((<Converter>graphClone.getElement("c0")).getBuffer()).toEqual({
-      p0: 0,
-      p1: 5,
+      p0_token: 0,
+      p1_token: 5,
     });
     graphClone.nextTick();
     expect((<Pool>graphClone.getElement("p0")).getState()).toEqual(0.5);
     expect((<Pool>graphClone.getElement("p1")).getState()).toEqual(0);
     expect((<Converter>graphClone.getElement("c0")).getBuffer()).toEqual({
-      p0: 0,
-      p1: 4.5,
+      p0_token: 0,
+      p1_token: 4.5,
     });
     graphClone.nextTick();
     expect((<Pool>graphClone.getElement("p0")).getState()).toEqual(0.25);
     expect((<Pool>graphClone.getElement("p1")).getState()).toEqual(0);
     expect((<Converter>graphClone.getElement("c0")).getBuffer()).toEqual({
-      p0: 0,
-      p1: 4.25,
+      p0_token: 0,
+      p1_token: 4.25,
     });
     const graphReloaded = Graph.fromJSON(JSON.parse(JSON.stringify(graph)));
     graphReloaded.nextTick();
     expect((<Pool>graphReloaded.getElement("p0")).getState()).toEqual(1);
     expect((<Pool>graphReloaded.getElement("p1")).getState()).toEqual(0);
     expect((<Converter>graphReloaded.getElement("c0")).getBuffer()).toEqual({
-      p0: 1,
-      p1: 6,
+      p0_token: 1,
+      p1_token: 6,
     });
     graphReloaded.nextTick();
     expect((<Pool>graphReloaded.getElement("p0")).getState()).toEqual(1);
     expect((<Pool>graphReloaded.getElement("p1")).getState()).toEqual(0);
     expect((<Converter>graphReloaded.getElement("c0")).getBuffer()).toEqual({
-      p0: 0,
-      p1: 5,
+      p0_token: 0,
+      p1_token: 5,
     });
     graphReloaded.nextTick();
     expect((<Pool>graphReloaded.getElement("p0")).getState()).toEqual(0.5);
     expect((<Pool>graphReloaded.getElement("p1")).getState()).toEqual(0);
     expect((<Converter>graphReloaded.getElement("c0")).getBuffer()).toEqual({
-      p0: 0,
-      p1: 4.5,
+      p0_token: 0,
+      p1_token: 4.5,
     });
     graphReloaded.nextTick();
     expect((<Pool>graphReloaded.getElement("p0")).getState()).toEqual(0.25);
     expect((<Pool>graphReloaded.getElement("p1")).getState()).toEqual(0);
     expect((<Converter>graphReloaded.getElement("c0")).getBuffer()).toEqual({
-      p0: 0,
-      p1: 4.25,
+      p0_token: 0,
+      p1_token: 4.25,
     });
   });
 });
@@ -243,25 +243,25 @@ describe("test executor utility functions", () => {
   test("test output merger", () => {
     const allOutputs: { [key: ElementId]: Packet[] } = {
       converter$0: [
-        { from: "pool$0", value: 1 },
-        { from: "converter$1", value: 2 },
+        { from: "pool$0", token: "pool$0_token", value: 1 },
+        { from: "converter$1", token: "converter$1_token", value: 2 },
       ],
 
-      pool$0: [{ from: "pool$2", value: 3.5 }],
+      pool$0: [{ from: "pool$2", token: "pool$2_token", value: 3.5 }],
     };
     const newOutput: { [key: ElementId]: Packet[] } = {
-      converter$0: [{ from: "pool$3", value: 2.5 }],
-      pool$3: [{ from: "converter$5", value: 1.5 }],
+      converter$0: [{ from: "pool$3", token: "pool$3_token", value: 2.5 }],
+      pool$3: [{ from: "converter$5", token: "converter$5_token", value: 1.5 }],
     };
     mergeOutputs(allOutputs, newOutput);
     expect(allOutputs).toEqual({
       converter$0: [
-        { from: "pool$0", value: 1 },
-        { from: "converter$1", value: 2 },
-        { from: "pool$3", value: 2.5 },
+        { from: "pool$0", token: "pool$0_token", value: 1 },
+        { from: "converter$1", token: "converter$1_token", value: 2 },
+        { from: "pool$3", token: "pool$3_token", value: 2.5 },
       ],
-      pool$0: [{ from: "pool$2", value: 3.5 }],
-      pool$3: [{ from: "converter$5", value: 1.5 }],
+      pool$0: [{ from: "pool$2", token: "pool$2_token", value: 3.5 }],
+      pool$3: [{ from: "converter$5", token: "converter$5_token", value: 1.5 }],
     });
   });
 });

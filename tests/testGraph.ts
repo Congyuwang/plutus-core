@@ -25,6 +25,7 @@ export function testCase2(): Graph {
   graph.setGateOutputWeight("g3", "g3-p4", 0);
   return graph;
 }
+
 /**
  * ```
  * +------<--------+
@@ -42,8 +43,8 @@ export function smallGraph(): Graph {
   graph.addNode(NodeType.Pool, "p1", "p1");
   graph.addNode(NodeType.Converter, "c0");
   graph.addNode(NodeType.Gate, "g0");
-  graph.setConverterRequiredInputPerUnit("c0", "p0", 2);
-  graph.setConverterRequiredInputPerUnit("c0", "p1", 1);
+  graph.setConverterRequiredInputPerUnit("c0", "p0_token", 2);
+  graph.setConverterRequiredInputPerUnit("c0", "p1_token", 1);
   graph.addEdge("p0-c0", "p0", "c0", 4);
   graph.addEdge("p1-c0", "p1", "c0", 4);
   graph.addEdge("c0-g0", "c0", "g0", 1);

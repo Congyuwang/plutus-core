@@ -481,7 +481,7 @@ class Converter {
   private toEdge?: ElementId;
   private condition: BooleanFn;
   private readonly requiredInputPerUnit: { [key: Token]: number };
-  private readonly buffer: { [key: ElementId]: number };
+  private readonly buffer: { [key: Token]: number };
 
   constructor(arg: Label | Converter) {
     if (typeof arg === "string") {
@@ -502,12 +502,12 @@ class Converter {
   }
 
   // add new input element from edges
-  _addToBuffer(elementId: ElementId, amount: number) {
+  _addToBuffer(token: Token, amount: number) {
     if (amount < 0) {
       throw Error("must add non-negative amount to element buffer");
     }
-    const currentAmount = this.buffer[elementId] || 0;
-    this.buffer[elementId] = currentAmount + amount;
+    const currentAmount = this.buffer[token] || 0;
+    this.buffer[token] = currentAmount + amount;
   }
 
   getLabel(): Label {
@@ -665,7 +665,7 @@ class Swap {
   private readonly tokenA: LiquidityPool;
   private readonly tokenB: LiquidityPool;
   private condition: BooleanFn;
-  private constraint: number | undefined;
+  private constraint: number;
 
   constructor(arg: Label | Swap) {
     if (typeof arg === "string") {
@@ -674,7 +674,7 @@ class Swap {
       this.tokenB = { token: undefined, amount: 100.0 };
       this.pipes = [];
       this.condition = new BooleanFn(["true"]);
-      this.constraint = undefined;
+      this.constraint = this.tokenA.amount * this.tokenB.amount;
     } else {
       this.label = arg.label;
       this.tokenA = { ...arg.tokenA };
@@ -685,17 +685,15 @@ class Swap {
     }
   }
 
-  isConfigValid() {
-    for (const out of Object.values(this.pipes)) {
-      if (out === undefined) {
-        throw Error("not all output edges has been configured");
-      }
-    }
+  validateSwapConfig() {
     if (this.tokenA.token === undefined || this.tokenB.token === undefined) {
       throw Error("not all token names are defined");
     }
     if (this.tokenA.amount <= 0 || this.tokenB.amount <= 0) {
       throw Error("all tokens must have positive amount");
+    }
+    if (this.constraint <= 0) {
+      throw Error("must have positive constraint");
     }
   }
 
@@ -740,6 +738,7 @@ class Swap {
       throw Error("negative amount not allowed");
     }
     this.tokenA.amount = amount;
+    this.constraint = this.tokenA.amount * this.tokenB.amount;
   }
 
   setTokenBAmount(amount: number) {
@@ -747,17 +746,34 @@ class Swap {
       throw Error("negative amount not allowed");
     }
     this.tokenB.amount = amount;
+    this.constraint = this.tokenA.amount * this.tokenB.amount;
   }
 
   setCondition(condition: string) {
     this.condition = BooleanFn.fromString(condition);
   }
 
-  setConstraint(constraint: number) {
-    if (constraint <= 0) {
-      throw Error("constraint must be positive");
+  swap(amount: number, token: Token, scope: VariableScope): [Token, number] | undefined {
+    this.validateSwapConfig();
+    if (amount < 0) {
+      throw Error("cannot swap negative amount of token");
     }
-    this.constraint = constraint;
+    if (amount === 0
+      || !this.condition.evaluate(scope)
+      || (token !== this.tokenA.token && token !== this.tokenB.token)) {
+      return undefined;
+    }
+    if (token === this.tokenA.token) {
+      this.tokenA.amount += amount;
+      const oldBAmount = this.tokenB.amount;
+      this.tokenB.amount = this.constraint / this.tokenA.amount;
+      return [this.tokenB.token!, oldBAmount - this.tokenB.amount];
+    } else {
+      this.tokenB.amount += amount;
+      const oldAAmount = this.tokenA.amount;
+      this.tokenA.amount = this.constraint / this.tokenB.amount;
+      return [this.tokenA.token!, oldAAmount - this.tokenA.amount];
+    }
   }
 
   _deleteInput(edgeId: ElementId) {
@@ -793,7 +809,6 @@ class Swap {
     const swap = new Swap("swap");
     Object.assign(swap, json);
     swap.setCondition(json.condition);
-    swap.setConstraint(json.constraint);
     return swap;
   }
 }
