@@ -11,6 +11,7 @@ export enum ConverterGroupTypes {
   Ordered = "ordered",
   Cyclic = "cyclic",
 }
+
 export type OrderedConverterGroups = {
   type: ConverterGroupTypes.Ordered;
   groups: { [key: ElementId]: Element }[];
@@ -51,7 +52,7 @@ export function compileGraph(graph: Graph, isCheckMode = false): CompiledGraph {
  */
 export function activatePoolsAndGates(
   graph: Graph,
-  checkMode = false
+  checkMode = false,
 ): { [key: ElementId]: Element } {
   const disabled: Set<ElementId> = new Set();
   for (const e of Object.values(graph.elements)) {
@@ -93,12 +94,15 @@ export function activatePoolsAndGates(
  */
 export function cutAtPoolInput(
   graphElements: { [key: ElementId]: Element },
-  isCheckMode = false
+  isCheckMode = false,
 ): { [key: ElementId]: Element }[] {
   const visited: Set<ElementId> = new Set();
   const groups: { [key: ElementId]: Element }[] = [];
   for (const id of Object.keys(graphElements)) {
-    if (visited.has(id)) continue;
+    // do not start building graph from Swap
+    if (visited.has(id) || graphElements[id]?.type === ElementType.Swap) {
+      continue;
+    }
     const newGroup = buildGroup(graphElements, id, true, false, isCheckMode, visited);
     groups.push(newGroup);
   }
@@ -114,12 +118,15 @@ export function cutAtPoolInput(
  */
 export function cutAtConverterInput(
   graphElements: { [key: ElementId]: Element },
-  isCheckMode = false
+  isCheckMode = false,
 ): { [key: ElementId]: Element }[] {
-  const visited: Set<ElementId> = new Set();
+  const visited: Set<ElementId | [ElementId, number]> = new Set();
   const groups: { [key: ElementId]: Element }[] = [];
   for (const id of Object.keys(graphElements)) {
-    if (visited.has(id)) continue;
+    // do not start building graph from Swap
+    if (visited.has(id) || graphElements[id]?.type === ElementType.Swap) {
+      continue;
+    }
     const newGroup = buildGroup(graphElements, id, true, true, isCheckMode, visited);
     groups.push(newGroup);
   }
@@ -136,7 +143,7 @@ export function cutAtConverterInput(
  */
 export function computeSubGroupOrders(
   graph: Graph,
-  groups: { [key: ElementId]: Element }[]
+  groups: { [key: ElementId]: Element }[],
 ): ParallelGroup {
   const groupToConverter: { [key: number]: ElementId } = {};
   const converterToGroup: { [key: ElementId]: number } = {};
@@ -215,7 +222,7 @@ function buildGroup(
   cutAtPoolInput: boolean,
   cutAtConverterOutput: boolean,
   isCheckMode: boolean,
-  visited: Set<ElementId>
+  visited: Set<ElementId | [ElementId, number]>,
 ): { [key: ElementId]: Element } {
   const group: { [key: ElementId]: Element } = {};
   buildGroupInner(
@@ -225,7 +232,7 @@ function buildGroup(
     cutAtConverterOutput,
     group,
     isCheckMode,
-    visited
+    visited,
   );
   return group;
 }
@@ -238,26 +245,35 @@ function buildGroupInner(
   cutAtConverterOutput: boolean,
   group: { [key: ElementId]: Element },
   isCheckMode: boolean,
-  visited: Set<ElementId>
+  visited: Set<ElementId | [ElementId, number]>,
+  currentSwapIndex?: number,
 ) {
   const element = graphElements[currentElement];
-  if (element === undefined || visited.has(currentElement)) {
+  if (element === undefined
+    || visited.has(currentElement)
+    || (currentSwapIndex !== undefined && visited.has([currentElement, currentSwapIndex]))) {
     return;
   }
   // add current element to the group
   group[currentElement] = element;
   // DFS, set visited to True
-  visited.add(currentElement);
+  if (currentSwapIndex !== undefined) {
+    visited.add([currentElement, currentSwapIndex]);
+  } else {
+    visited.add(currentElement);
+  }
+
   // get ElementId of neighbors
   const neighbors = getNeighborsOf(
     graphElements,
-    element,
+    currentElement,
     cutAtPoolInput,
     cutAtConverterOutput,
-    isCheckMode
+    isCheckMode,
+    currentSwapIndex,
   );
   // recursively add to group
-  for (const elementId of neighbors) {
+  for (const [elementId, currentSwapIndex] of neighbors) {
     buildGroupInner(
       graphElements,
       elementId,
@@ -265,7 +281,8 @@ function buildGroupInner(
       cutAtConverterOutput,
       group,
       isCheckMode,
-      visited
+      visited,
+      currentSwapIndex,
     );
   }
 }
@@ -275,35 +292,40 @@ function buildGroupInner(
  * Cut at specific points depending on the flags specified.
  *
  * @param graphElements the graph storage
- * @param element the element itself
+ * @param currentElement the element itself
  * @param cutAtPoolInput whether to cut graph at Pool input points
  * @param cutAtConverterOutput whether to cut converter at output points
  * @param isCheckMode whether this run is for checking Graph
+ * @param currentSwapIndex which index of swap
+ *
+ * @returns neighbor elements id
  */
 function getNeighborsOf(
   graphElements: { [key: ElementId]: Element },
-  element: Element,
+  currentElement: ElementId,
   cutAtPoolInput: boolean,
   cutAtConverterOutput: boolean,
-  isCheckMode = false
-): ElementId[] {
-  const neighbors: ElementId[] = [];
+  isCheckMode = false,
+  currentSwapIndex?: number,
+): [ElementId, number | undefined][] {
+  const element = graphElements[currentElement]!;
+  const neighbors: [ElementId, number | undefined][] = [];
   switch (element.type) {
     case ElementType.Pool: {
       const input = element._getInput();
       if (input && !cutAtPoolInput) {
-        neighbors.push(input);
+        neighbors.push([input, undefined]);
       }
       const output = element._getOutput();
       if (output !== undefined) {
-        neighbors.push(output);
+        neighbors.push([output, undefined]);
       }
       break;
     }
     case ElementType.Gate: {
       const input = element._getInput();
       if (input !== undefined) {
-        neighbors.push(input);
+        neighbors.push([input, undefined]);
       }
       if (isCheckMode) {
         // for the purpose of checking graph logic
@@ -311,23 +333,23 @@ function getNeighborsOf(
         const outputs = element._getOutputs();
         for (const [output, weight] of Object.entries(outputs)) {
           if (weight > 0) {
-            neighbors.push(output);
+            neighbors.push([output, undefined]);
           }
         }
       } else {
         const output = element._getOutput();
         if (output !== undefined) {
-          neighbors.push(output);
+          neighbors.push([output, undefined]);
         }
       }
       break;
     }
     case ElementType.Converter: {
       const inputs = element._getInputs();
-      Object.keys(inputs).forEach(id => neighbors.push(id));
+      Object.keys(inputs).forEach(id => neighbors.push([id, undefined]));
       const output = element._getOutput();
       if (output && !cutAtConverterOutput) {
-        neighbors.push(output);
+        neighbors.push([output, undefined]);
       }
       break;
     }
@@ -335,12 +357,46 @@ function getNeighborsOf(
       const to = graphElements[element.toNode];
       // do not connect to Pool, if cut at Pool input
       if (!cutAtPoolInput || to?.type !== ElementType.Pool) {
-        neighbors.push(element.toNode);
+        if (to?.type === ElementType.Swap) {
+          const idx = to._getPipes().findIndex(p => p[0] === currentElement);
+          if (idx !== -1) {
+            const [pipeIn, pipeOut] = to._getPipe(idx);
+            if (pipeIn !== undefined && pipeOut !== undefined) {
+              // only return validly connected swap
+              neighbors.push([element.toNode, idx]);
+            }
+          }
+        } else {
+          neighbors.push([element.toNode, undefined]);
+        }
       }
       const from = graphElements[element.fromNode];
       // do not connect from Converter, if cut at Converter output
       if (!cutAtConverterOutput || from?.type !== ElementType.Converter) {
-        neighbors.push(element.fromNode);
+        if (from?.type === ElementType.Swap) {
+          const idx = from._getPipes().findIndex(p => p[0] === currentElement);
+          if (idx !== -1) {
+            const [pipeIn, pipeOut] = from._getPipe(idx);
+            if (pipeIn !== undefined && pipeOut !== undefined) {
+              // only return validly connected swap
+              neighbors.push([element.fromNode, idx]);
+            }
+          }
+        } else {
+          neighbors.push([element.fromNode, undefined]);
+        }
+      }
+      break;
+    }
+    case ElementType.Swap: {
+      if (currentSwapIndex === undefined) {
+        // search started from swap; simply skip
+        break;
+      }
+      const [pipeIn, pipeOut] = element._getPipe(currentSwapIndex);
+      if (pipeIn !== undefined && pipeOut !== undefined) {
+        neighbors.push([pipeIn, undefined]);
+        neighbors.push([pipeOut, undefined]);
       }
       break;
     }

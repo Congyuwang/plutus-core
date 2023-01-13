@@ -10,8 +10,9 @@ import {
   Node,
   NodeType,
   Pool,
+  Swap,
 } from "./nodes";
-import { VariableScope, math } from "./formula";
+import { math, VariableScope } from "./formula";
 import { compileGraph, ConverterGroupTypes } from "./compiler";
 import nextTick from "./executor";
 
@@ -46,6 +47,7 @@ class Graph {
     gate: number;
     converter: number;
     edge: number;
+    swap: number;
   };
 
   /**
@@ -60,6 +62,7 @@ class Graph {
         edge: 0,
         gate: 0,
         pool: 0,
+        swap: 0,
       };
     } else {
       this.elements = {};
@@ -91,6 +94,8 @@ class Graph {
    * @param rate default to 1, negative means unlimited.
    * @param label (optional) a globally unique label.
    *        If missing, use automatic labelling.
+   * @param swapRelatedInput when adding output to Swap edge,
+   *        provide this information.
    * @return the newly created edge
    */
   public addEdge(
@@ -98,7 +103,8 @@ class Graph {
     fromId: ElementId,
     toId: ElementId,
     rate = DEFAULT_EDGE_RATE,
-    label?: Label
+    label?: Label,
+    swapRelatedInput?: ElementId,
   ): Edge {
     const from = this.getElement(fromId);
     const to = this.getElement(toId);
@@ -167,6 +173,9 @@ class Graph {
       case NodeType.Converter:
         newElement = new Converter(labelName);
         break;
+      case NodeType.Swap:
+        newElement = new Swap(labelName);
+        break;
     }
     this.elements[id] = newElement;
     this.labels[labelName] = id;
@@ -199,8 +208,7 @@ class Graph {
         return e.getState();
       case ElementType.Edge:
         return e.getRate();
-      case ElementType.Gate:
-      case ElementType.Converter:
+      default:
         return undefined;
     }
   }
@@ -231,11 +239,11 @@ class Graph {
     // check that id exists
     const e = this.elements[id];
     if (e === undefined) {
-      throw new Error("id not found");
+      throw Error("id not found");
     }
     // check that new label is not duplicated
     if (label in this.labels) {
-      throw new Error(`label '${label}' already exists`);
+      throw Error(`label '${label}' already exists`);
     }
     if (!isValidLabel(label)) {
       throw Error("`label` must follow javascript variable naming format");
@@ -258,7 +266,7 @@ class Graph {
   public setConverterRequiredInputPerUnit(
     converterId: ElementId,
     inputId: ElementId,
-    amount: number
+    amount: number,
   ) {
     const converter = this.validateConverterRequiredInputPerUnit(converterId, inputId);
     if (amount > 0) {
@@ -279,7 +287,7 @@ class Graph {
    */
   public validateConverterRequiredInputPerUnit(
     converterId: ElementId,
-    inputId: ElementId
+    inputId: ElementId,
   ): Converter {
     const converter = this.getElement(converterId);
     if (converter === undefined || converter.type !== ElementType.Converter) {
@@ -307,7 +315,7 @@ class Graph {
   public setGateOutputWeight(
     gateId: ElementId,
     edgeId: ElementId,
-    weight: number = DEFAULT_WEIGHT
+    weight: number = DEFAULT_WEIGHT,
   ) {
     const gate = this.validateGateOutputWeight(gateId, edgeId);
     gate._setOutput(edgeId, Math.max(0, weight));
@@ -316,7 +324,7 @@ class Graph {
   public validateGateOutputWeight(
     gateId: ElementId,
     edgeId: ElementId,
-    weight: number = DEFAULT_WEIGHT
+    weight: number = DEFAULT_WEIGHT,
   ): Gate {
     const gate = this.getElement(gateId);
     if (gate === undefined || gate.type !== ElementType.Gate) {
@@ -366,6 +374,9 @@ class Graph {
   private deleteElementInner(id: ElementId, deleted: ElementId[]) {
     const e = this.elements[id];
     if (e === undefined) return;
+    deleted.push(id);
+    delete this.elements[id];
+    delete this.labels[e.getLabel()];
     switch (e.type) {
       case ElementType.Pool: {
         const poolInputEdge = e._getInput();
@@ -385,7 +396,7 @@ class Graph {
         }
         const converterInputEdges = e._getInputs();
         Object.keys(converterInputEdges).forEach(edgeId =>
-          this.deleteElementInner(edgeId, deleted)
+          this.deleteElementInner(edgeId, deleted),
         );
         break;
       }
@@ -407,10 +418,14 @@ class Graph {
         if (to !== undefined) Graph.deleteNodeInput(to, id);
         break;
       }
+      case ElementType.Swap: {
+        for (const [pipeIn, pipeOut] of e._getPipes()) {
+          if (pipeIn !== undefined) this.deleteElementInner(pipeIn, deleted);
+          if (pipeOut !== undefined) this.deleteElementInner(pipeOut, deleted);
+        }
+        break;
+      }
     }
-    deleted.push(id);
-    delete this.elements[id];
-    delete this.labels[e.getLabel()];
   }
 
   /**
@@ -479,13 +494,29 @@ class Graph {
   }
 
   // node.output = edge.from
-  private setNodeOutputToEdge(from: Element, edgeId: ElementId) {
+  private setNodeOutputToEdge(
+    from: Element,
+    edgeId: ElementId,
+    swapInputIndex?: number,
+  ) {
     switch (from.type) {
       case ElementType.Edge: {
         throw Error("edge must not start from `Edge`");
       }
       case ElementType.Gate: {
         from._setOutput(edgeId, DEFAULT_WEIGHT);
+        break;
+      }
+      case ElementType.Swap: {
+        if (swapInputIndex === undefined) {
+          throw Error("missing swap input index");
+        }
+        const pipe = from._getPipe(swapInputIndex);
+        const [_, pipe_out] = pipe;
+        if (pipe_out !== undefined) {
+          this.deleteElement(pipe_out);
+        }
+        pipe[1] = edgeId;
         break;
       }
       default: {
@@ -501,7 +532,11 @@ class Graph {
   }
 
   // node.input = edge.to
-  private setNodeInputToEdge(to: Element, edgeId: ElementId) {
+  private setNodeInputToEdge(
+    to: Element,
+    edgeId: ElementId,
+    swapInputIndex?: number,
+  ) {
     switch (to.type) {
       case ElementType.Edge: {
         throw Error("edge must not point to `Edge`");
@@ -516,7 +551,19 @@ class Graph {
         to._setInput(edgeId);
         break;
       }
-      case ElementType.Converter: {
+      case ElementType.Swap: {
+        if (swapInputIndex === undefined) {
+          throw Error("missing swap input index");
+        }
+        const pipe = to._getPipe(swapInputIndex);
+        const [pipe_in, _] = pipe;
+        if (pipe_in !== undefined) {
+          this.deleteElement(pipe_in);
+        }
+        pipe[0] = edgeId;
+        break;
+      }
+      default: {
         to._setInput(edgeId);
         break;
       }
@@ -528,11 +575,8 @@ class Graph {
     switch (from.type) {
       case ElementType.Edge:
         throw Error("cannot delete output of edge (edge-edge connection not allowed)");
-      case ElementType.Gate:
-        from._deleteOutput(edgeId);
-        break;
       default:
-        from._deleteOutput();
+        from._deleteOutput(edgeId);
         break;
     }
   }
@@ -542,11 +586,8 @@ class Graph {
     switch (to.type) {
       case ElementType.Edge:
         throw Error("cannot delete output of edge (edge-edge connection not allowed)");
-      case ElementType.Converter:
-        to._deleteInput(edgeId);
-        break;
       default:
-        to._deleteInput();
+        to._deleteInput(edgeId);
         break;
     }
   }
@@ -567,6 +608,8 @@ class Graph {
         return `gate$${this.autoLabelCounter.gate++}`;
       case ElementType.Edge:
         return `edge$${this.autoLabelCounter.edge++}`;
+      case ElementType.Swap:
+        return `swap$${this.autoLabelCounter.swap++}`;
     }
   }
 }

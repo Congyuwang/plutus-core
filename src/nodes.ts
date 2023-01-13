@@ -1,10 +1,11 @@
 import { BooleanFn, NumericFn, VariableScope } from "./formula";
 import { min, sum } from "mathjs";
 
-type Node = Pool | Gate | Converter;
+type Node = Pool | Gate | Converter | Swap;
 type Element = Node | Edge;
 type ElementId = string;
 type Label = string;
+type Token = string;
 
 /**
  * Pool, Gate, Converter types
@@ -13,6 +14,7 @@ enum NodeType {
   Pool = "pool",
   Gate = "gate",
   Converter = "converter",
+  Swap = "swap",
 }
 
 /**
@@ -22,6 +24,7 @@ enum ElementType {
   Pool = "pool",
   Gate = "gate",
   Converter = "converter",
+  Swap = "swap",
   Edge = "edge",
 }
 
@@ -34,14 +37,22 @@ function isValidLabel(label: Label): boolean {
   return /^([a-zA-Z_$][a-zA-Z\d_$]*)$/.test(label);
 }
 
+function isValidToken(token: Token): boolean {
+  return /^([a-zA-Z_$][a-zA-Z\d_$]*)$/.test(token);
+}
+
 function _checkLabelValidity(label: Label): Label {
   if (!isValidLabel(label)) throw Error("`label` must follow javascript variable naming format");
   return label;
 }
 
-// Edges to connect nodes
-interface Edge {
-  readonly type: ElementType.Edge;
+function _checkTokenValidity(token: Token): Token {
+  if (!isValidToken(token)) throw Error("`token` must follow javascript variable naming format");
+  return token;
+}
+
+function defaultToken(label: Label): Token {
+  return `${label}_token`;
 }
 
 class Edge {
@@ -121,13 +132,14 @@ class Edge {
 /**
  * Pools store and reproduce values.
  */
-interface Pool {
-  readonly type: ElementType.Pool;
-}
+// interface Pool {
+//   readonly type: ElementType.Pool;
+// }
 
 class Pool {
   readonly type = ElementType.Pool;
   private label: Label;
+  private token: Token;
   private action: NumericFn;
   private condition: BooleanFn;
   private state: number;
@@ -140,6 +152,7 @@ class Pool {
       this.label = _checkLabelValidity(arg);
       this.action = NumericFn.fromString("x");
       this.condition = new BooleanFn(["true"]);
+      this.token = defaultToken(this.label);
       this.state = 0;
       this.capacity = -1; // means infinite
     } else {
@@ -147,6 +160,7 @@ class Pool {
       this.action = NumericFn.fromString(arg.action.toString());
       this.condition = BooleanFn.fromString(arg.condition.toString());
       this.state = arg.state;
+      this.token = arg.token;
       this.capacity = arg.capacity;
       this.fromEdge = arg.fromEdge;
       this.toEdge = arg.toEdge;
@@ -171,6 +185,10 @@ class Pool {
 
   getCapacity(): number {
     return this.capacity;
+  }
+
+  getToken(): Token {
+    return this.token;
   }
 
   _getInput(): ElementId | undefined {
@@ -260,6 +278,10 @@ class Pool {
     }
   }
 
+  _setToken(token: Token) {
+    this.token = _checkTokenValidity(token);
+  }
+
   _setInput(edgeId: ElementId) {
     this.fromEdge = edgeId;
   }
@@ -319,9 +341,9 @@ class Pool {
 }
 
 // Gate to distribute between edges
-interface Gate {
-  readonly type: ElementType.Gate;
-}
+// interface Gate {
+//   readonly type: ElementType.Gate;
+// }
 
 class Gate {
   readonly type = ElementType.Gate;
@@ -447,29 +469,32 @@ class Gate {
 }
 
 // Converter to convert tokens
-interface Converter {
-  readonly type: ElementType.Converter;
-}
+// interface Converter {
+//   readonly type: ElementType.Converter;
+// }
 
 class Converter {
   readonly type = ElementType.Converter;
   private label: Label;
+  private token: Token;
   private readonly fromEdges: { [key: ElementId]: boolean };
   private toEdge?: ElementId;
   private condition: BooleanFn;
-  private readonly requiredInputPerUnit: { [key: ElementId]: number };
+  private readonly requiredInputPerUnit: { [key: Token]: number };
   private readonly buffer: { [key: ElementId]: number };
 
   constructor(arg: Label | Converter) {
     if (typeof arg === "string") {
-      this.label = arg;
+      this.label = _checkLabelValidity(arg);
       this.fromEdges = {};
+      this.token = defaultToken(this.label);
       this.condition = new BooleanFn(["true"]);
       this.requiredInputPerUnit = {};
       this.buffer = {};
     } else {
       this.label = arg.label;
       this.fromEdges = { ...arg.fromEdges };
+      this.token = arg.token;
       this.condition = BooleanFn.fromString(arg.condition.toString());
       this.requiredInputPerUnit = { ...arg.requiredInputPerUnit };
       this.buffer = { ...arg.buffer };
@@ -489,14 +514,18 @@ class Converter {
     return this.label;
   }
 
-  _getRequiredInputPerUnit(): { [key: ElementId]: number } {
+  getToken(): Token {
+    return this.token;
+  }
+
+  _getRequiredInputPerUnit(): { [key: Token]: number } {
     return this.requiredInputPerUnit;
   }
 
   /**
    * Return a copy of the converter buffer.
    */
-  getBuffer(): { [key: ElementId]: number } {
+  getBuffer(): { [key: Token]: number } {
     return { ...this.buffer };
   }
 
@@ -506,7 +535,7 @@ class Converter {
    * @param elementId elementId representing the id.
    * @param value amount required.
    */
-  _setRequiredInputPerUnit(elementId: ElementId, value: number) {
+  _setRequiredInputPerUnit(elementId: Token, value: number) {
     if (value <= 0) {
       throw Error("must have positive element value requirement");
     }
@@ -523,6 +552,10 @@ class Converter {
 
   getCondition(): string {
     return this.condition.toString();
+  }
+
+  _setToken(token: Token) {
+    this.token = _checkTokenValidity(token);
   }
 
   // label must follow valid js variable naming
@@ -616,10 +649,160 @@ class Converter {
   }
 }
 
+// interface Swap {
+//   readonly type: ElementType.Swap;
+// }
+
+type LiquidityPool = {
+  token: Token | undefined,
+  amount: number,
+}
+
+class Swap {
+  readonly type = ElementType.Swap;
+  private label: Label;
+  private pipes: [ElementId | undefined, ElementId | undefined][];
+  private readonly tokenA: LiquidityPool;
+  private readonly tokenB: LiquidityPool;
+  private condition: BooleanFn;
+  private constraint: number | undefined;
+
+  constructor(arg: Label | Swap) {
+    if (typeof arg === "string") {
+      this.label = _checkLabelValidity(arg);
+      this.tokenA = { token: undefined, amount: 100.0 };
+      this.tokenB = { token: undefined, amount: 100.0 };
+      this.pipes = [];
+      this.condition = new BooleanFn(["true"]);
+      this.constraint = undefined;
+    } else {
+      this.label = arg.label;
+      this.tokenA = { ...arg.tokenA };
+      this.tokenB = { ...arg.tokenB };
+      this.pipes = arg.pipes.map(p => [...p]);
+      this.condition = BooleanFn.fromString(arg.condition.toString());
+      this.constraint = arg.constraint;
+    }
+  }
+
+  isConfigValid() {
+    for (const out of Object.values(this.pipes)) {
+      if (out === undefined) {
+        throw Error("not all output edges has been configured");
+      }
+    }
+    if (this.tokenA.token === undefined || this.tokenB.token === undefined) {
+      throw Error("not all token names are defined");
+    }
+    if (this.tokenA.amount <= 0 || this.tokenB.amount <= 0) {
+      throw Error("all tokens must have positive amount");
+    }
+  }
+
+  getLabel(): Label {
+    return this.label;
+  }
+
+  getTokenA(): LiquidityPool {
+    return { ...this.tokenA };
+  }
+
+  getTokenB(): LiquidityPool {
+    return { ...this.tokenB };
+  }
+
+  _getPipe(index: number): [ElementId | undefined, ElementId | undefined] {
+    const pipe = this.pipes[index];
+    if (pipe === undefined) {
+      throw Error("Swap pipe index out of range");
+    }
+    return pipe;
+  }
+
+  _getPipes(): [ElementId | undefined, ElementId | undefined][] {
+    return this.pipes;
+  }
+
+  _setLabel(label: Label) {
+    this.label = _checkLabelValidity(label);
+  }
+
+  setTokenA(token: Token) {
+    this.tokenA.token = _checkTokenValidity(token);
+  }
+
+  setTokenB(token: Token) {
+    this.tokenB.token = _checkTokenValidity(token);
+  }
+
+  setTokenAAmount(amount: number) {
+    if (amount <= 0) {
+      throw Error("negative amount not allowed");
+    }
+    this.tokenA.amount = amount;
+  }
+
+  setTokenBAmount(amount: number) {
+    if (amount <= 0) {
+      throw Error("negative amount not allowed");
+    }
+    this.tokenB.amount = amount;
+  }
+
+  setCondition(condition: string) {
+    this.condition = BooleanFn.fromString(condition);
+  }
+
+  setConstraint(constraint: number) {
+    if (constraint <= 0) {
+      throw Error("constraint must be positive");
+    }
+    this.constraint = constraint;
+  }
+
+  _deleteInput(edgeId: ElementId) {
+    const pipe = this.pipes.find(p => p[0] === edgeId);
+    if (pipe !== undefined) {
+      const [_, pipe_out] = pipe;
+      if (pipe_out !== undefined) {
+        this.pipes = this.pipes.filter(p => p[0] !== edgeId);
+      } else {
+        pipe[0] = undefined;
+      }
+    }
+  }
+
+  _deleteOutput(edgeId: ElementId) {
+    const pipe = this.pipes.find(p => p[1] === edgeId);
+    if (pipe !== undefined) {
+      const [pipe_in, _] = pipe;
+      if (pipe_in !== undefined) {
+        // do not store [undefined undefined docks]
+        this.pipes = this.pipes.filter(p => p[1] !== edgeId);
+      } else {
+        pipe[1] = undefined;
+      }
+    }
+  }
+
+  clone(): Swap {
+    return new Swap(this);
+  }
+
+  static fromJson(json: any): Swap {
+    const swap = new Swap("swap");
+    Object.assign(swap, json);
+    swap.setCondition(json.condition);
+    swap.setConstraint(json.constraint);
+    return swap;
+  }
+}
+
 export {
   Pool,
   Gate,
   Edge,
+  Swap,
   Converter,
   Element,
   ElementType,
@@ -628,4 +811,5 @@ export {
   ElementId,
   isValidLabel,
   Label,
+  Token,
 };
