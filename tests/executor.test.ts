@@ -1,6 +1,7 @@
 import { mergeOutputs, Packet } from "../src/executor";
-import { Converter, ElementId, Graph, NodeType, Pool } from "../src";
+import { Converter, ElementId, Graph, NodeType, Pool, Swap } from "../src";
 import { smallGraph } from "./testGraph";
+import { CheckResultType } from "../src/graph";
 
 describe("test simple cases", () => {
   test("test two pools with a gate", () => {
@@ -135,6 +136,43 @@ describe("test simple cases", () => {
       p0_token: 0,
       p1_token: 8,
     });
+  });
+
+  test("pools with swap", () => {
+    const graph = new Graph();
+    const p0 = <Pool>graph.addNode(NodeType.Pool, "p0", "p0");
+    p0._setToken("metal");
+    p0.setState(100);
+    const p1 = <Pool>graph.addNode(NodeType.Pool, "p1", "p1");
+    p1._setToken("wood");
+    p1.setState(100);
+    const s0 = <Swap>graph.addNode(NodeType.Swap, "s0", "s0");
+    graph.addEdge("p0-s0", "p0", "s0", 0, 10);
+    graph.addEdge("s0-p1", "s0", "p1", 0, 10);
+    graph.addEdge("p1-s0", "p1", "s0", 1, 20);
+    graph.addEdge("s0-p0", "s0", "p0", 1, 20);
+    expect(graph.checkGraph().type).toEqual(CheckResultType.Error);
+    s0.setTokenA("metal");
+    s0.setTokenB("wood");
+    let p0State = 100;
+    let p1State = 100;
+    let swapMetal = 100;
+    let swapWood = 100;
+    for (let i = 0; i < 10; i++) {
+      graph.nextTick();
+      p0State -= 10;
+      swapMetal += 10;
+      p1State += swapWood - 10000 / swapMetal;
+      swapWood = 10000 / swapMetal;
+      p1State -= 20;
+      swapWood += 20;
+      p0State += swapMetal - 10000 / swapWood;
+      swapMetal = 10000 / swapWood;
+      expect(p1.getState()).toEqual(p1State);
+      expect(p0.getState()).toEqual(p0State);
+      expect(s0.getTokenA().amount).toEqual(swapMetal);
+      expect(s0.getTokenB().amount).toEqual(swapWood);
+    }
   });
 
   test("pools with gates and converter (case 1), also testing graph clone", () => {

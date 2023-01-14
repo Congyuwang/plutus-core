@@ -223,20 +223,37 @@ function runEdge(
 
   // next step if the packet is not empty
   if (nextPacket.value > 0) {
-    // recurse if the next element is Gate
-    if (toElement?.type === ElementType.Gate) {
-      const nextEdge = toElement._getOutput();
-      if (nextEdge !== undefined) {
-        // continue forwarding if edge connected to Gate
-        // and there's something to forward
-        runEdge(graph, nextEdge, visited, outputs, nextPacket);
+    // recurse if the next element is Gate or Converter
+    switch (toElement?.type) {
+      case ElementType.Gate: {
+        const nextEdge = toElement._getOutput();
+        if (nextEdge !== undefined) {
+          // continue forwarding if edge connected to Gate
+          // and there's something to forward
+          runEdge(graph, nextEdge, visited, outputs, nextPacket);
+        }
+        break;
       }
-    } else {
-      // write to the output in cases of Pool or Converter
-      if (!(edge.toNode in outputs)) {
-        outputs[edge.toNode] = [];
+      case ElementType.Swap: {
+        const pipe = toElement._getPipes().find(p => p[0] === edgeId);
+        if (pipe === undefined) {
+          throw Error("internal Error, pipe must not be undefined");
+        }
+        const nextEdge = pipe[1];
+        if (nextEdge !== undefined) {
+          // continue forwarding if edge connected to Gate
+          // and there's something to forward
+          runEdge(graph, nextEdge, visited, outputs, nextPacket);
+        }
+        break;
       }
-      outputs[edge.toNode]!.push(nextPacket);
+      default: {
+        // write to the output in cases of Pool or Converter
+        if (!(edge.toNode in outputs)) {
+          outputs[edge.toNode] = [];
+        }
+        outputs[edge.toNode]!.push(nextPacket);
+      }
     }
   }
 }

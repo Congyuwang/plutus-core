@@ -23,19 +23,25 @@ export const DEFAULT_EDGE_RATE = 1;
 export enum CheckResultType {
   NoError = "no error",
   Warning = "warning",
+  Error = "error",
 }
 
-export type GraphCheckResult = GraphCheckWarningResult | GraphCheckNoError;
+export type GraphCheckResult = GraphCheckError | GraphCheckWarning | GraphCheckNoError;
 
 export type GraphCheckNoError = {
   type: CheckResultType.NoError;
 };
 
-export type GraphCheckWarningResult = {
+export type GraphCheckWarning = {
   type: CheckResultType.Warning;
   errorMsg: string;
   cyclicConverters: Set<ElementId>[];
 };
+
+export type GraphCheckError = {
+  type: CheckResultType.Error;
+  errorMsg: string;
+}
 
 class Graph {
   // Mapping from globally unique ID to Edge | Node.
@@ -489,6 +495,18 @@ class Graph {
    * Check whether the graph has any error or warnings.
    */
   public checkGraph(): GraphCheckResult {
+    try {
+      Object.values(this.elements).forEach(e => {
+        if (e.type === ElementType.Swap) {
+          e.validateSwapConfig();
+        }
+      });
+    } catch (err) {
+      return {
+        type: CheckResultType.Error,
+        errorMsg: `${err}`,
+      };
+    }
     const compiledGraph = compileGraph(this, true);
     const cyclicConverters: Set<ElementId>[] = [];
     compiledGraph.forEach(g => {
