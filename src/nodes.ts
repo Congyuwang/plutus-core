@@ -780,7 +780,7 @@ class Swap {
     const pipe = this.pipes.find(p => p[0] === edgeId);
     if (pipe !== undefined) {
       const [_, pipe_out] = pipe;
-      if (pipe_out !== undefined) {
+      if (pipe_out === undefined) {
         this.pipes = this.pipes.filter(p => p[0] !== edgeId);
       } else {
         pipe[0] = undefined;
@@ -792,7 +792,7 @@ class Swap {
     const pipe = this.pipes.find(p => p[1] === edgeId);
     if (pipe !== undefined) {
       const [pipe_in, _] = pipe;
-      if (pipe_in !== undefined) {
+      if (pipe_in === undefined) {
         // do not store [undefined undefined docks]
         this.pipes = this.pipes.filter(p => p[1] !== edgeId);
       } else {
