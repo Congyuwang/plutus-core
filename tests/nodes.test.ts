@@ -1,4 +1,4 @@
-import { Pool, Gate, Converter, Edge } from "../src";
+import { Pool, Gate, Converter, Edge, Swap } from "../src";
 import { gof } from "chi-sq-test";
 import { sum } from "mathjs";
 import MapScope from "./utils";
@@ -60,10 +60,10 @@ describe("test Gate", () => {
     expect(gate.getLabel()).toEqual("gate0");
     // test invalid label
     expect(() => gate._setLabel("bad label")).toThrow(
-      Error("`label` must follow javascript variable naming format")
+      Error("`label` must follow javascript variable naming format"),
     );
     expect(() => gate._setLabel("5_gates")).toThrow(
-      Error("`label` must follow javascript variable naming format")
+      Error("`label` must follow javascript variable naming format"),
     );
     gate._setLabel("new_label");
     expect(gate.getLabel()).toEqual("new_label");
@@ -165,5 +165,25 @@ describe("test Converter", () => {
       "003": 8,
       "004": 76,
     });
+  });
+
+  test("test Swap", () => {
+    const swap = new Swap("swap0");
+    expect(() => swap.setTokenA("token-A"))
+      .toThrow("`token` must follow javascript variable naming format");
+    swap.setTokenA("tokenA");
+    expect(() => swap.setTokenB("tokenA")).toThrow("duplicate token types not allowed");
+    swap.setTokenB("tokenB");
+    expect(() => swap.setTokenAAmount(-1)).toThrow("negative amount not allowed");
+    expect(() => swap.setTokenBAmount(-1)).toThrow("negative amount not allowed");
+    swap.setTokenAAmount(10000);
+    swap.setTokenBAmount(10000);
+    expect(swap.swap(100, "unknown", MapScope.fromObj({}))).toBeUndefined();
+    expect(swap.swap(100, "tokenA", MapScope.fromObj({})))
+      .toEqual(["tokenB", 10000 - 10000 * 10000 / 10100]);
+    expect(swap.swap(100, "tokenA", MapScope.fromObj({})))
+      .toEqual(["tokenB", 10000 * 10000 / 10100 - 10000 * 10000 / 10200]);
+    expect(swap.swap(100, "tokenB", MapScope.fromObj({})))
+      .toEqual(["tokenA", 10200 - 10000 * 10000 / (10000 * 10000 / 10200 + 100)]);
   });
 });
