@@ -2,7 +2,7 @@
  * For the details of the testing graphs,
  * open `../plutus-test-graph.drawio.xml` in `https://app.diagrams.net`
  */
-import { Graph, Swap } from "../src";
+import { Graph } from "../src";
 import { addCyclicConverter, addDeadCycle, addTestGraph, testCase1, testCase2 } from "./testGraph";
 import { CheckResultType } from "../src/graph";
 import {
@@ -33,8 +33,6 @@ describe("test compiler module", () => {
     const graph = testCase1();
     const elements = activatePoolsAndGates(graph);
     const poolGroups = cutAtPoolInput(elements);
-    console.log(poolGroups);
-    console.log((<Swap>graph.getElement("s0"))._getPipes());
     const poolGroupKeys = poolGroups.map(g => new Set(Object.keys(g)));
     expect(poolGroupKeys.length).toEqual(4);
     expect(poolGroupKeys).toContainEqual(new Set(["s0", "s0-p2"]));
