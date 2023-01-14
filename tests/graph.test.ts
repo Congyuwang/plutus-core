@@ -218,6 +218,8 @@ describe("test graph functionality", () => {
         "e-7": 1,
       });
     }
+    expect(graph.upStreamTokensOfConverter("c-0"))
+      .toEqual(new Set(["pool$1_token", "pool$2_token", "pool$3_token"]));
     expect(Object.keys(graph.elements).length).toEqual(17);
     expect(Object.keys(graph.labels).length).toEqual(17);
 

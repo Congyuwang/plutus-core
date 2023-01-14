@@ -11,6 +11,7 @@ import {
   NodeType,
   Pool,
   Swap,
+  Token,
 } from "./nodes";
 import { math, VariableScope } from "./formula";
 import { compileGraph, ConverterGroupTypes } from "./compiler";
@@ -282,22 +283,63 @@ class Graph {
    * Validate whether this is a valid input element for converter.
    * No actual change is made.
    * @param converterId the id of the Converter.
-   * @param inputId the id of the input element.
-   *        Must be either `Pool` ot `Converter`.
+   * @param token the token of the input.
    */
   public validateConverterRequiredInputPerUnit(
     converterId: ElementId,
-    inputId: ElementId,
+    token: Token,
   ): Converter {
     const converter = this.getElement(converterId);
     if (converter === undefined || converter.type !== ElementType.Converter) {
       throw Error("Selected element is not a converter");
     }
-    const requiredElement = this.getElement(inputId);
-    if (requiredElement?.type === ElementType.Gate || requiredElement?.type === ElementType.Edge) {
-      throw Error("Cannot use `Gate` or `Edge` as input. Use `Pool` or `Converter`.");
-    }
+    const availableTokens = this.upStreamTokensOfConverter(converterId);
+    Object.keys(converter._getRequiredInputPerUnit()).forEach(token => {
+      if (!availableTokens.has(token)) {
+        throw Error(`${token} not available`);
+      }
+    });
     return converter;
+  }
+
+  public upStreamTokensOfConverter(converterId: ElementId): Set<Token> {
+    const converter = this.getElement(converterId);
+    if (converter === undefined || converter.type !== ElementType.Converter) {
+      throw Error("Selected element is not a converter");
+    }
+    const tokens: Set<Token> = new Set();
+    const inputs = Object.keys(converter._getInputs());
+    for (const edge of inputs) {
+      this.upStreamTokenOf(edge).forEach(token => tokens.add(token));
+    }
+    return tokens;
+  }
+
+  private upStreamTokenOf(element: ElementId): Set<Token> {
+    const e = this.getElement(element);
+    const tokens: Set<Token> = new Set();
+    switch (e?.type) {
+      case ElementType.Converter:
+      case ElementType.Pool: {
+        // pool and converter returns output token
+        tokens.add(e.getToken());
+        break;
+      }
+      case ElementType.Gate: {
+        const gateInput = e._getInput();
+        if (gateInput !== undefined) {
+          const gateTokens = this.upStreamTokenOf(gateInput);
+          gateTokens.forEach(token => tokens.add(token));
+        }
+        break;
+      }
+      case ElementType.Edge: {
+        const edgeTokens = this.upStreamTokenOf(e.fromNode);
+        edgeTokens.forEach(token => tokens.add(token));
+        break;
+      }
+    }
+    return tokens;
   }
 
   /**
