@@ -717,6 +717,18 @@ class Swap {
     return pipe;
   }
 
+  _getOrCreatePipe(index: number): [ElementId | undefined, ElementId | undefined] {
+    if (index > this.pipes.length) {
+      throw Error("swap index out of range");
+    }
+    let pipe = this.pipes[index];
+    if (pipe === undefined) {
+      pipe = [undefined, undefined];
+      this.pipes[index] = pipe;
+    }
+    return pipe;
+  }
+
   _getPipes(): [ElementId | undefined, ElementId | undefined][] {
     return this.pipes;
   }
@@ -726,11 +738,19 @@ class Swap {
   }
 
   setTokenA(token: Token) {
-    this.tokenA.token = _checkTokenValidity(token);
+    const tokenType = _checkTokenValidity(token);
+    if (tokenType === this.tokenB.token) {
+      throw Error("duplicate token types not allowed");
+    }
+    this.tokenA.token = token;
   }
 
   setTokenB(token: Token) {
-    this.tokenB.token = _checkTokenValidity(token);
+    const tokenType = _checkTokenValidity(token);
+    if (tokenType === this.tokenA.token) {
+      throw Error("duplicate token types not allowed");
+    }
+    this.tokenB.token = tokenType;
   }
 
   setTokenAAmount(amount: number) {
@@ -753,6 +773,15 @@ class Swap {
     this.condition = BooleanFn.fromString(condition);
   }
 
+  /**
+   * Swap a certain token.
+   *
+   * @param amount the input amount
+   * @param token the token type
+   * @param scope variable scope for evaluating `Condition`
+   *
+   * @return undefined if the swapping cannot proceed
+   */
   swap(amount: number, token: Token, scope: VariableScope): [Token, number] | undefined {
     this.validateSwapConfig();
     if (amount < 0) {
@@ -824,6 +853,7 @@ export {
   Node,
   NodeType,
   ElementId,
+  LiquidityPool,
   isValidLabel,
   Label,
   Token,

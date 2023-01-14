@@ -94,7 +94,7 @@ class Graph {
    * @param rate default to 1, negative means unlimited.
    * @param label (optional) a globally unique label.
    *        If missing, use automatic labelling.
-   * @param swapRelatedInput when adding output to Swap edge,
+   * @param swapInputIndex when adding output to Swap edge,
    *        provide this information.
    * @return the newly created edge
    */
@@ -102,9 +102,9 @@ class Graph {
     edgeId: ElementId,
     fromId: ElementId,
     toId: ElementId,
+    swapInputIndex?: number,
     rate = DEFAULT_EDGE_RATE,
     label?: Label,
-    swapRelatedInput?: ElementId,
   ): Edge {
     const from = this.getElement(fromId);
     const to = this.getElement(toId);
@@ -119,9 +119,9 @@ class Graph {
       throw Error("cannot connect to self (self loop not allowed)");
     }
     // from.output = edge
-    this.setNodeOutputToEdge(from, edgeId);
+    this.setNodeOutputToEdge(from, edgeId, swapInputIndex);
     // to.input = edge
-    this.setNodeInputToEdge(to, edgeId);
+    this.setNodeInputToEdge(to, edgeId, swapInputIndex);
     const edge = new Edge(labelName, fromId, toId, rate);
     this.elements[edgeId] = edge;
     this.labels[labelName] = edgeId;
@@ -511,7 +511,7 @@ class Graph {
         if (swapInputIndex === undefined) {
           throw Error("missing swap input index");
         }
-        const pipe = from._getPipe(swapInputIndex);
+        const pipe = from._getOrCreatePipe(swapInputIndex);
         const [_, pipe_out] = pipe;
         if (pipe_out !== undefined) {
           this.deleteElement(pipe_out);
@@ -555,7 +555,7 @@ class Graph {
         if (swapInputIndex === undefined) {
           throw Error("missing swap input index");
         }
-        const pipe = to._getPipe(swapInputIndex);
+        const pipe = to._getOrCreatePipe(swapInputIndex);
         const [pipe_in, _] = pipe;
         if (pipe_in !== undefined) {
           this.deleteElement(pipe_in);
