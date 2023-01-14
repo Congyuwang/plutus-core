@@ -223,7 +223,7 @@ function runEdge(
 
   // next step if the packet is not empty
   if (nextPacket.value > 0) {
-    // recurse if the next element is Gate or Converter
+    // recurse if the next element is Gate or Swap
     switch (toElement?.type) {
       case ElementType.Gate: {
         const nextEdge = toElement._getOutput();
