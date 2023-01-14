@@ -25,7 +25,7 @@ describe("test simple cases", () => {
     graph.addNode(NodeType.Pool, "p0", "p0");
     graph.addNode(NodeType.Pool, "p1", "p1");
     (<Pool>graph.getElement("p0")).setState(10);
-    graph.addEdge("p0-p1", "p0", "p1", -1);
+    graph.addEdge("p0-p1", "p0", "p1", undefined, -1);
     expect((<Pool>graph.getElement("p0")).getState()).toEqual(10);
     expect((<Pool>graph.getElement("p1")).getState()).toEqual(0);
     graph.nextTick();
@@ -44,9 +44,9 @@ describe("test simple cases", () => {
     (<Pool>graph.getElement("p0")).setState(10);
     (<Pool>graph.getElement("p1")).setState(10);
     (<Pool>graph.getElement("p2")).setState(10);
-    graph.addEdge("p0-p1", "p0", "p1", 1);
-    graph.addEdge("p1-p2", "p1", "p2", 2);
-    graph.addEdge("p2-p0", "p2", "p0", 3);
+    graph.addEdge("p0-p1", "p0", "p1", undefined, 1);
+    graph.addEdge("p1-p2", "p1", "p2", undefined, 2);
+    graph.addEdge("p2-p0", "p2", "p0", undefined, 3);
     let p0State = 10;
     let p1State = 10;
     let p2State = 10;

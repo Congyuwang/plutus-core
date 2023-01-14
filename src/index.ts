@@ -1,7 +1,7 @@
 import { BooleanFn, NumericFn } from "./formula";
 import { Graph } from "./graph";
 import { Pool, Gate, Edge, Converter, Swap, NodeType, isValidLabel, ElementType } from "./nodes";
-import type { Node, Element, ElementId, Label, Token } from "./nodes";
+import type { Node, Element, ElementId, Label, Token, LiquidityPool } from "./nodes";
 
 export {
   Graph,
@@ -15,6 +15,7 @@ export {
   NodeType,
   ElementId,
   Label,
+  LiquidityPool,
   Token,
   ElementType,
   Element,
