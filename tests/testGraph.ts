@@ -10,7 +10,7 @@ export function testCase1(): Graph {
   addTestGraph(graph);
   addCyclicConverter(graph);
   graph.setGateOutputWeight("g2", "g2-p1", 0);
-  graph.setGateOutputWeight("g2", "g2-p2", 0);
+  graph.setGateOutputWeight("g2", "g2-s0", 0);
   graph.setGateOutputWeight("g3", "g3-c4", 0);
   return graph;
 }
@@ -62,13 +62,16 @@ export function addTestGraph(graph: Graph) {
   graph.addNode(NodeType.Converter, "c1", "c1");
   graph.addNode(NodeType.Converter, "c2", "c2");
   graph.addNode(NodeType.Gate, "g2", "g2");
+  graph.addNode(NodeType.Swap, "s0", "s0");
   graph.addEdge("p0-c0", "p0", "c0");
   graph.addEdge("c0-g2", "c0", "g2");
   graph.addEdge("g2-c1", "g2", "c1");
   graph.addEdge("g2-p1", "g2", "p1");
-  graph.addEdge("g2-p2", "g2", "p2");
+  graph.addEdge("g2-s0", "g2", "s0", 0);
+  graph.addEdge("s0-p2", "s0", "p2", 0);
   graph.addEdge("p1-c2", "p1", "c2");
-  graph.addEdge("p2-c2", "p2", "c2");
+  graph.addEdge("p2-s0", "p2", "s0", 1);
+  graph.addEdge("s0-c2", "s0", "c2", 1);
   graph.addEdge("c2-c1", "c2", "c1");
   graph.addEdge("c1-p0", "c1", "p0");
   graph.addEdge("p3-c1", "p3", "c1");
