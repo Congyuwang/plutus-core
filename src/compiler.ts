@@ -374,7 +374,7 @@ function getNeighborsOf(
       // do not connect from Converter, if cut at Converter output
       if (!cutAtConverterOutput || from?.type !== ElementType.Converter) {
         if (from?.type === ElementType.Swap) {
-          const idx = from._getPipes().findIndex(p => p[0] === currentElement);
+          const idx = from._getPipes().findIndex(p => p[1] === currentElement);
           if (idx !== -1) {
             const [pipeIn, pipeOut] = from._getPipe(idx);
             if (pipeIn !== undefined && pipeOut !== undefined) {
