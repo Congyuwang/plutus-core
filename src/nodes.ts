@@ -783,7 +783,11 @@ class Swap {
    * @return undefined if the swapping cannot proceed
    */
   swap(amount: number, token: Token, scope: VariableScope): [Token, number] | undefined {
-    this.validateSwapConfig();
+    try {
+      this.validateSwapConfig();
+    } catch (_) {
+      return undefined;
+    }
     if (amount < 0) {
       throw Error("cannot swap negative amount of token");
     }

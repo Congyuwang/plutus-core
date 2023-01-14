@@ -2,7 +2,7 @@
  * For the details of the testing graphs,
  * open file `../plutus-test-graph.drawio.xml` in `https://app.diagrams.net`
  */
-import { Graph, NodeType } from "../src";
+import { Graph, NodeType, Swap } from "../src";
 
 export function testCase1(): Graph {
   const graph = new Graph();
@@ -62,7 +62,9 @@ export function addTestGraph(graph: Graph) {
   graph.addNode(NodeType.Converter, "c1", "c1");
   graph.addNode(NodeType.Converter, "c2", "c2");
   graph.addNode(NodeType.Gate, "g2", "g2");
-  graph.addNode(NodeType.Swap, "s0", "s0");
+  const s = <Swap>graph.addNode(NodeType.Swap, "s0", "s0");
+  s.setTokenA("tokenA");
+  s.setTokenB("tokenB");
   graph.addEdge("p0-c0", "p0", "c0");
   graph.addEdge("c0-g2", "c0", "g2");
   graph.addEdge("g2-c1", "g2", "c1");

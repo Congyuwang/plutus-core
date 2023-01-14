@@ -485,7 +485,9 @@ class Graph {
   }
 
   /**
-   * Compute the next tick state of the graph
+   * Compute the next tick state of the graph.
+   *
+   * call checkGraph() before calling nextTick!
    */
   public nextTick() {
     nextTick(this);
