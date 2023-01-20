@@ -18,7 +18,7 @@ Note: pseudocodes, might be different from actual implementation in details.
 
 `Converter` N-in 1-out.
 
-`Swap`N-in N-out.
+`Swap` N-in N-out.
 
 ## Execution Algorithm
 
@@ -61,7 +61,7 @@ Code: https://github.com/Congyuwang/plutus-core/blob/b09c46c7cee71f1b94b9e7b4366
 
 ### Step 1: Cut At Pool Input
 
-Group graph into connected components, but ignoring `Edge --> Pool` connections.
+Group graph into connected components, but ignoring `Edge --> Pool` connections.
 
 Note:
 
@@ -340,6 +340,9 @@ def executeSubgroup:
 end def
 ```
 
+Related JS
+Code: https://github.com/Congyuwang/plutus-core/blob/b09c46c7cee71f1b94b9e7b4366df3971af913d2/src/executor.ts#L122:L143
+
 #### Execute a group
 
 Execute cyclic group and ordered group with different strategy:
@@ -373,7 +376,10 @@ def executeGroup:
 end def
 ```
 
-Execute graph
+Related JS
+Code: https://github.com/Congyuwang/plutus-core/blob/b09c46c7cee71f1b94b9e7b4366df3971af913d2/src/executor.ts#L58:L120
+
+#### Execute graph
 
 ```pseudocode
 # Input: List[List[List[Element]]] groups_of_subgroups
@@ -394,3 +400,6 @@ for element, packets of allOutputs:
     end for
 end for
 ```
+
+Related JS
+Code: https://github.com/Congyuwang/plutus-core/blob/b09c46c7cee71f1b94b9e7b4366df3971af913d2/src/executor.ts#L30:L56
