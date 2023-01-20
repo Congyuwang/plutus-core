@@ -2,7 +2,13 @@
 
 Author: 王聪雨
 
+Version / Date: 2023/01/21
+
 Note: pseudocodes, might be different from actual implementation in details.
+
+## Table of Content
+
+[TOC]
 
 ## Data Structure
 
