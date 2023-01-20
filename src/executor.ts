@@ -135,9 +135,8 @@ function executeSubgroup(
 
   // Use `visited` to keep track of visited edges
   // and prevent potential infinite loop.
-  const visited: Set<ElementId> = new Set();
   for (const edgeId of entryPoints) {
-    runEdge(graph, edgeId, visited, output);
+    runEdge(graph, edgeId, output);
   }
   return output;
 }
@@ -146,12 +145,9 @@ function executeSubgroup(
 function runEdge(
   graph: Graph,
   edgeId: ElementId,
-  visited: Set<ElementId>,
   outputs: { [key: ElementId]: Packet[] },
   packet?: Packet,
 ) {
-  if (visited.has(edgeId)) return;
-  visited.add(edgeId);
   const edge = graph.getElement(edgeId);
   if (edge?.type !== ElementType.Edge) return; // never happens
 
@@ -184,34 +180,30 @@ function runEdge(
       break;
     }
     case ElementType.Gate: {
-      if (packet === undefined) {
-        // nothing to forward, end recursion
-        return;
-      } else if (!fromElement.evaluateCondition(graph.variableScope())) {
-        // gate condition does not evaluate to true
-        return;
-      } else {
-        // forwarding with possible loss
-        nextPacket.value = edge.isUnlimited()
-          ? packet.value // lossless take all
-          : Math.min(packet.value, edge.getRate());
-        nextPacket.from = packet.from;
-        nextPacket.token = packet.token;
-      }
+      if (packet === undefined) return;
+
+      if (!fromElement.evaluateCondition(graph.variableScope())) return;
+
+      // forwarding with possible loss
+      nextPacket.value = edge.isUnlimited()
+        ? packet.value // lossless take all
+        : Math.min(packet.value, edge.getRate());
+      nextPacket.from = packet.from;
+      nextPacket.token = packet.token;
       break;
     }
     case ElementType.Swap: {
-      if (packet === undefined) {
-        return;
-      } else {
-        const swap = fromElement.swap(packet.value, packet.token, graph.variableScope());
-        // if nothing swapped, end recursion
-        if (swap === undefined) return;
-        const [token, amount] = swap;
-        nextPacket.from = packet.from;
-        nextPacket.token = token;
-        nextPacket.value = amount;
-      }
+      if (packet === undefined) return;
+
+      const swap = fromElement.swap(packet.value, packet.token, graph.variableScope());
+      
+      // if nothing swapped, end recursion
+      if (swap === undefined) return;
+
+      const [token, amount] = swap;
+      nextPacket.from = packet.from;
+      nextPacket.token = token;
+      nextPacket.value = amount;
       break;
     }
     case ElementType.Edge:
@@ -222,38 +214,39 @@ function runEdge(
   const toElement = graph.getElement(edge.toNode);
 
   // next step if the packet is not empty
-  if (nextPacket.value > 0) {
-    // recurse if the next element is Gate or Swap
-    switch (toElement?.type) {
-      case ElementType.Gate: {
-        const nextEdge = toElement._getOutput();
-        if (nextEdge !== undefined) {
-          // continue forwarding if edge connected to Gate
-          // and there's something to forward
-          runEdge(graph, nextEdge, visited, outputs, nextPacket);
-        }
-        break;
+  if (nextPacket.value <= 0) {
+    return;
+  }
+  // recurse if the next element is Gate or Swap
+  switch (toElement?.type) {
+    case ElementType.Gate: {
+      const nextEdge = toElement._getOutput();
+      if (nextEdge !== undefined) {
+        // continue forwarding if edge connected to Gate
+        // and there's something to forward
+        runEdge(graph, nextEdge, outputs, nextPacket);
       }
-      case ElementType.Swap: {
-        const pipe = toElement._getPipes().find(p => p[0] === edgeId);
-        if (pipe === undefined) {
-          throw Error("internal Error, pipe must not be undefined");
-        }
-        const nextEdge = pipe[1];
-        if (nextEdge !== undefined) {
-          // continue forwarding if edge connected to Gate
-          // and there's something to forward
-          runEdge(graph, nextEdge, visited, outputs, nextPacket);
-        }
-        break;
+      break;
+    }
+    case ElementType.Swap: {
+      const pipe = toElement._getPipes().find(p => p[0] === edgeId);
+      if (pipe === undefined) {
+        throw Error("internal Error, pipe must not be undefined");
       }
-      default: {
-        // write to the output in cases of Pool or Converter
-        if (!(edge.toNode in outputs)) {
-          outputs[edge.toNode] = [];
-        }
-        outputs[edge.toNode]!.push(nextPacket);
+      const nextEdge = pipe[1];
+      if (nextEdge !== undefined) {
+        // continue forwarding if edge connected to Gate
+        // and there's something to forward
+        runEdge(graph, nextEdge, outputs, nextPacket);
       }
+      break;
+    }
+    default: {
+      // write to the output in cases of Pool or Converter
+      if (!(edge.toNode in outputs)) {
+        outputs[edge.toNode] = [];
+      }
+      outputs[edge.toNode]!.push(nextPacket);
     }
   }
 }
